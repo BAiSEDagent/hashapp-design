@@ -21,7 +21,8 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 ```text
 artifacts-monorepo/
 ├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
+│   ├── api-server/         # Express API server
+│   └── hashapp/            # Hashapp - dark premium spending app for AI agents
 ├── lib/                    # Shared libraries
 │   ├── api-spec/           # OpenAPI spec + Orval codegen config
 │   ├── api-client-react/   # Generated React Query hooks
@@ -49,6 +50,16 @@ Every package extends `tsconfig.base.json` which sets `composite: true`. The roo
 - `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
 
 ## Packages
+
+### `artifacts/hashapp` (`@workspace/hashapp`)
+
+Hashapp — consumer-grade dark premium spending app for AI agents. Demo-only frontend prototype (no backend). Built with React + Vite + Tailwind CSS + framer-motion + wouter.
+
+- **Theme**: Dark-only (near-black bg hsl 220 20% 4%), blue accent (hsl 220 60% 55%), mobile-first max-width 430px
+- **Routes**: `/` (Activity Feed), `/agent` (Scout Agent Detail), `/rules` (Spending Rules), `/payees` (Trusted Destinations), `/receipt/:id` (Receipt Detail)
+- **Demo Flow**: Load → 3s pause → pending approval slides in → user approves → navigate to Rules → toggle off "No recurring charges" → return to Activity → 2s → new blocked entry appears
+- **Key Design**: Intent-aware language ("Scout bought research credits..."), plain-English rules, subtle onchain references ("Settled on Base · proof available", "Verified on Base · ERC-8004 #4721")
+- **Dependencies**: react, framer-motion, wouter, lucide-react, tailwindcss, clsx, tailwind-merge
 
 ### `artifacts/api-server` (`@workspace/api-server`)
 
