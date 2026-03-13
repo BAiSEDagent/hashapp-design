@@ -23,6 +23,12 @@ Only include partners that improve:
 ### Base
 Home chain, ecosystem alignment, wallet/account UX, strongest event fit.
 
+Critical fit for Hashapp:
+- smart wallets
+- session keys
+- paymaster constraints
+- fleet-friendly execution model
+
 ### Uniswap
 Best concrete value-movement action for the demo and strongest Track 1 partner.
 
@@ -37,6 +43,9 @@ Interesting if it becomes the request / approval communication backbone between 
 
 ### x402
 Only worth featuring if directly in the payment loop for paid agent services.
+
+### OnchainKit / Base Account
+Strong implementation partner for polished wallet UX, identity continuity, and agent-friendly wallet setup.
 
 ## Anti-pattern
 Do not create a sponsor salad. The stack should feel inevitable, not stitched together.
