@@ -7,6 +7,7 @@
 - finalize partner shortlist
 - lock trust model
 - lock fleet model
+- lock research-agent demo lane
 
 ## Phase 1 — MVP spec
 - screen-by-screen product spec
@@ -16,6 +17,7 @@
 - receipt model
 - session key model
 - paymaster constraint model
+- exact flow docs
 
 ## Phase 2 — Build repo kickoff
 - create separate Hashapp implementation repo
@@ -25,6 +27,7 @@
 - decide Sepolia-first execution path
 
 ## MVP non-negotiables
+- activity feed hero screen
 - fund agent budget
 - create rule
 - request purchase
