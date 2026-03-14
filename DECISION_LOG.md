@@ -208,3 +208,24 @@ Active
 
 ### Notes
 Best surfaces: Activity trusted-destination rail, search, payee rows, Scout identity, receipt proof context.
+
+---
+
+## 2026-03-14 — Base-first product, MetaMask decision deferred to permission-plumbing evaluation
+
+### Decision
+Keep the product story Base-first while explicitly evaluating whether MetaMask’s Delegation Toolkit reduces enough plumbing work to justify using it for delegated permissions.
+
+### Why
+Base is still the strongest home chain and brand fit, but MetaMask may provide more packaged delegated-permission primitives.
+
+### Alternatives considered
+- Base all the way down
+- MetaMask as full plumbing pivot
+- Base-first product + MetaMask permission layer
+
+### Status
+Revisit soon
+
+### Notes
+Do not let the user-facing product become a confused multi-wallet showcase.
