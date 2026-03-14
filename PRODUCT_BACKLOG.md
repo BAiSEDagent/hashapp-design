@@ -19,11 +19,15 @@ Track product improvements separately from plumbing truth issues.
 - [ ] Group rules into clearer categories (e.g. Safety vs Behavior)
 - [ ] Keep non-custodial language rigorously clear across the app
 - [ ] Refine spend permission object visibility and control
+- [ ] Add “why approved / why blocked” explanation layer
+- [ ] Explore permission presets / personalities
 
 ## P2 — Optional polish / track leverage
 - [ ] Add stronger but honest Base value cue (speed / low-cost settlement)
 - [ ] Add optional Venice “Private Review” toggle without derailing core flow
 - [ ] Refine partner-track-specific proof lines only where real
+- [ ] Add permission timeline / history layer
+- [ ] Explore smart suggestions for trusted destinations and recurring permissions
 
 ## Rule
 P0 beats P1. P1 beats P2.
