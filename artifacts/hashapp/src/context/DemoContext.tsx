@@ -18,15 +18,29 @@ export interface FeedItem {
   txHash?: string;
 }
 
+export interface SpendPermission {
+  id: string;
+  vendor: string;
+  vendorInitial: string;
+  vendorColor: string;
+  amount: number;
+  cadence: 'monthly' | 'weekly' | 'daily';
+  state: 'active' | 'revoked' | 'pending';
+  ruledBy: string;
+  basename?: string;
+}
+
 export interface Rule {
   id: string;
   name: string;
+  description: string;
   enabled: boolean;
 }
 
 interface DemoState {
   feed: FeedItem[];
   rules: Rule[];
+  spendPermissions: SpendPermission[];
   stage: 'INITIAL' | 'PENDING_ADDED' | 'APPROVED' | 'RULE_DISABLED' | 'BLOCKED_ADDED';
   approvePending: (id: string) => void;
   declinePending: (id: string) => void;
@@ -59,7 +73,7 @@ const INITIAL_FEED: FeedItem[] = [
     amountStr: '$299.00',
     intent: "Scout tried to purchase enterprise analytics suite",
     status: 'BLOCKED',
-    statusMessage: 'Blocked — exceeds research budget',
+    statusMessage: 'Blocked — exceeds single-purchase limit',
     timestamp: '9:15 AM',
     category: 'Software'
   },
@@ -110,12 +124,37 @@ const INITIAL_FEED: FeedItem[] = [
   }
 ];
 
+const INITIAL_SPEND_PERMISSIONS: SpendPermission[] = [
+  {
+    id: 'sp-1',
+    vendor: 'Perplexity',
+    vendorInitial: 'P',
+    vendorColor: 'bg-teal-500',
+    amount: 20,
+    cadence: 'daily',
+    state: 'active',
+    ruledBy: 'r2',
+    basename: 'perplexity.base.eth'
+  },
+  {
+    id: 'sp-2',
+    vendor: 'OpenAI',
+    vendorInitial: 'O',
+    vendorColor: 'bg-zinc-700',
+    amount: 45,
+    cadence: 'monthly',
+    state: 'active',
+    ruledBy: 'r2',
+    basename: 'openai.base.eth'
+  },
+];
+
 const INITIAL_RULES: Rule[] = [
-  { id: 'r1', name: 'Only spend on verified research tools', enabled: true },
-  { id: 'r2', name: 'Maximum $50 USDC per single purchase', enabled: true },
-  { id: 'r3', name: 'Daily spending limit: $200 USDC', enabled: true },
-  { id: 'r4', name: 'Block spend permissions (recurring)', enabled: true },
-  { id: 'r5', name: 'Require approval for new vendors', enabled: true },
+  { id: 'r1', name: 'Verified vendors only', description: 'Only spend at vendors verified on Base', enabled: true },
+  { id: 'r2', name: 'Per-purchase cap: 50 USDC', description: 'Block any single purchase above $50 USDC', enabled: true },
+  { id: 'r3', name: 'Daily limit: 200 USDC', description: 'Cap total daily spend at $200 USDC', enabled: true },
+  { id: 'r4', name: 'Block spend permissions', description: 'Prevent Scout from creating recurring spend permissions', enabled: true },
+  { id: 'r5', name: 'New vendor approval', description: 'Require your approval before paying a new vendor', enabled: true },
 ];
 
 const DemoContext = createContext<DemoState | undefined>(undefined);
@@ -123,9 +162,9 @@ const DemoContext = createContext<DemoState | undefined>(undefined);
 export function DemoProvider({ children }: { children: React.ReactNode }) {
   const [feed, setFeed] = useState<FeedItem[]>(INITIAL_FEED);
   const [rules, setRules] = useState<Rule[]>(INITIAL_RULES);
+  const [spendPermissions, setSpendPermissions] = useState<SpendPermission[]>(INITIAL_SPEND_PERMISSIONS);
   const [stage, setStage] = useState<DemoState['stage']>('INITIAL');
 
-  // Trigger 1: Add pending request after 3s
   useEffect(() => {
     if (stage === 'INITIAL') {
       const timer = setTimeout(() => {
@@ -137,7 +176,7 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
           merchantInitial: 'D',
           amount: 89.00,
           amountStr: '$89.00',
-          intent: "Scout is requesting a spend permission for DataStream Pro — $89 USDC/mo for real-time market data",
+          intent: "Scout is requesting a recurring spend permission — $89 USDC/mo for real-time market data from DataStream Pro",
           status: 'PENDING',
           statusMessage: 'Spend permission · needs approval',
           timestamp: 'Just now',
@@ -150,7 +189,6 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     }
   }, [stage]);
 
-  // Trigger 2: Add blocked request after rule disabled
   useEffect(() => {
     if (stage === 'RULE_DISABLED') {
       const timer = setTimeout(() => {
@@ -180,22 +218,33 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
       item.id === id 
         ? { 
             ...item, 
-            status: 'APPROVED', 
-            statusMessage: 'Approved — within research budget',
+            status: 'APPROVED' as StatusType, 
+            statusMessage: 'Approved — spend permission granted',
             txHash: '0x3c71a8e2f4b6d9c0e1a3f5d7b9c2e4a6f8d0b1c3e5a7f9d2b4c6e8a0f1d3b5d88f'
           } 
         : item
     ));
+    setSpendPermissions(prev => [...prev, {
+      id: 'sp-3',
+      vendor: 'DataStream Pro',
+      vendorInitial: 'D',
+      vendorColor: 'bg-purple-600',
+      amount: 89,
+      cadence: 'monthly',
+      state: 'active',
+      ruledBy: 'r4',
+      basename: 'datastream.base.eth'
+    }]);
     if (stage === 'PENDING_ADDED') setStage('APPROVED');
   };
 
   const declinePending = (id: string) => {
     setFeed(prev => prev.map(item => 
       item.id === id 
-        ? { ...item, status: 'DECLINED', statusMessage: 'Declined by you' } 
+        ? { ...item, status: 'DECLINED' as StatusType, statusMessage: 'Declined by you' } 
         : item
     ));
-    if (stage === 'PENDING_ADDED') setStage('APPROVED'); // Progress demo anyway
+    if (stage === 'PENDING_ADDED') setStage('APPROVED');
   };
 
   const toggleRule = (id: string) => {
@@ -206,7 +255,7 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <DemoContext.Provider value={{ feed, rules, stage, approvePending, declinePending, toggleRule }}>
+    <DemoContext.Provider value={{ feed, rules, spendPermissions, stage, approvePending, declinePending, toggleRule }}>
       {children}
     </DemoContext.Provider>
   );
