@@ -250,3 +250,24 @@ Active
 
 ### Notes
 Next checkpoint: prove one thin Base-native scoped-session flow before revisiting the plumbing choice.
+
+---
+
+## 2026-03-14 — Onboarding becomes a first-class product problem
+
+### Decision
+Treat onboarding as a first-class product area instead of an afterthought.
+
+### Why
+Hashapp must teach trust, non-custody, scoped permissions, and revoke-ability clearly before the product feels safe.
+
+### Alternatives considered
+- no onboarding
+- technical wallet-first setup flow
+- rules-first onboarding
+
+### Status
+Active
+
+### Notes
+Best current shape: Connect wallet → Meet Scout → Set first boundary → Review first request.

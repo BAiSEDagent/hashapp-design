@@ -13,6 +13,7 @@ Track product improvements separately from plumbing truth issues.
 - [ ] Remove or fix any dead proof/explorer links
 
 ## P1 — High-value product improvements
+- [ ] Design and implement first-run onboarding flow
 - [ ] Make emergency stop / freeze all more accessible
 - [ ] Add proactive trusted destination management (not just historical list)
 - [ ] Group rules into clearer categories (e.g. Safety vs Behavior)
