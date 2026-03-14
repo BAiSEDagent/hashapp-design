@@ -77,16 +77,21 @@ export default function Receipt() {
             </div>
           </div>
 
-          <div className="mt-8 text-center space-y-2">
-            <p className="text-[13px] text-muted-foreground/60 flex items-center justify-center gap-1.5">
-              Settled on Base · proof available
-            </p>
-            {item.txHash && (
-              <p className="text-xs font-mono text-muted-foreground/40 flex items-center justify-center gap-1 cursor-pointer hover:text-muted-foreground/60 transition-colors">
-                tx {item.txHash} <ExternalLink size={10} />
+          {(item.status === 'APPROVED' || item.status === 'AUTO_APPROVED') && item.txHash && (
+            <div className="mt-8 text-center space-y-2">
+              <p className="text-[13px] text-muted-foreground/60 flex items-center justify-center gap-1.5">
+                Settled in USDC on Base · proof available
               </p>
-            )}
-          </div>
+              <a 
+                href={`https://basescan.org/tx/${item.txHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-mono text-muted-foreground/40 flex items-center justify-center gap-1 cursor-pointer hover:text-muted-foreground/60 transition-colors"
+              >
+                tx {item.txHash.slice(0, 6)}...{item.txHash.slice(-4)} <ExternalLink size={10} />
+              </a>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

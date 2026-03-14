@@ -47,7 +47,7 @@ const INITIAL_FEED: FeedItem[] = [
     statusMessage: 'Auto-approved — within daily budget',
     timestamp: '11:42 AM',
     category: 'Research Tools',
-    txHash: '0x8f2a...c912'
+    txHash: '0x8f2a1c4d9e7b3f6a0d5c8e2b4a7f1d9c3e6b8a0f2d5c7e9b1a4d6f8c0e3a5c912'
   },
   {
     id: 'tx-3',
@@ -76,7 +76,7 @@ const INITIAL_FEED: FeedItem[] = [
     statusMessage: 'Approved',
     timestamp: '4:20 PM',
     category: 'API Services',
-    txHash: '0x4a2f...e91b'
+    txHash: '0x4a2f7b1e9c3d5a8f0e2b6c4d7a9f1e3c5b8d0a2f4e6c8b1d3a5f7e9c0b2d4e91b'
   },
   {
     id: 'tx-5',
@@ -91,7 +91,7 @@ const INITIAL_FEED: FeedItem[] = [
     statusMessage: 'Auto-approved',
     timestamp: '1:10 PM',
     category: 'Data Services',
-    txHash: '0x1b9c...f44a'
+    txHash: '0x1b9c3e5a7d0f2c4b6e8a1d3f5c7b9e0a2d4f6c8b1e3a5d7f9c0b2e4a6d8f44a'
   },
   {
     id: 'tx-6',
@@ -106,15 +106,15 @@ const INITIAL_FEED: FeedItem[] = [
     statusMessage: 'Approved',
     timestamp: '10:05 AM',
     category: 'Research Reports',
-    txHash: '0x99dd...2a11'
+    txHash: '0x99dd4e7a1b3c5f8d0e2a6b9c1d4f7e3a5b8c0d2e6a9f1b3c5d8e0a2f4b7c2a11'
   }
 ];
 
 const INITIAL_RULES: Rule[] = [
   { id: 'r1', name: 'Only spend on verified research tools', enabled: true },
-  { id: 'r2', name: 'Maximum $50 per single purchase', enabled: true },
-  { id: 'r3', name: 'Daily spending limit: $200', enabled: true },
-  { id: 'r4', name: 'No recurring charges', enabled: true },
+  { id: 'r2', name: 'Maximum $50 USDC per single purchase', enabled: true },
+  { id: 'r3', name: 'Daily spending limit: $200 USDC', enabled: true },
+  { id: 'r4', name: 'Block spend permissions (recurring)', enabled: true },
   { id: 'r5', name: 'Require approval for new vendors', enabled: true },
 ];
 
@@ -137,9 +137,9 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
           merchantInitial: 'D',
           amount: 89.00,
           amountStr: '$89.00',
-          intent: "Scout wants to subscribe to DataStream Pro for real-time market data",
+          intent: "Scout is requesting a spend permission for DataStream Pro — $89 USDC/mo for real-time market data",
           status: 'PENDING',
-          statusMessage: 'Needs approval',
+          statusMessage: 'Spend permission · needs approval',
           timestamp: 'Just now',
           category: 'Data Services'
         };
@@ -161,10 +161,10 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
           merchantColor: 'bg-purple-600',
           merchantInitial: 'D',
           amount: 89.00,
-          amountStr: '$89.00/mo',
-          intent: "Scout attempted recurring subscription to DataStream Pro",
+          amountStr: '$89.00',
+          intent: "Scout attempted to create a spend permission for DataStream Pro",
           status: 'BLOCKED',
-          statusMessage: 'Blocked — recurring charges disabled',
+          statusMessage: 'Blocked — spend permissions disabled',
           timestamp: 'Just now',
           category: 'Data Services'
         };
@@ -182,7 +182,7 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
             ...item, 
             status: 'APPROVED', 
             statusMessage: 'Approved — within research budget',
-            txHash: '0x3c71...d88f'
+            txHash: '0x3c71a8e2f4b6d9c0e1a3f5d7b9c2e4a6f8d0b1c3e5a7f9d2b4c6e8a0f1d3b5d88f'
           } 
         : item
     ));
