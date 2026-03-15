@@ -1,10 +1,14 @@
 import React from 'react';
-import { Bot, Shield, ArrowRight, Clock, CheckCircle2, Zap, RefreshCw } from 'lucide-react';
+import { Bot, Shield, ArrowRight, CheckCircle2, Zap, RefreshCw } from 'lucide-react';
+import { useAccount } from 'wagmi';
 import { useDemo } from '@/context/DemoContext';
 import { AvatarIcon } from '@/components/ui/AvatarIcon';
+import { useLocation } from 'wouter';
 
 export default function Agent() {
   const { rules, feed, spendPermissions } = useDemo();
+  const { address, isConnected } = useAccount();
+  const [, setLocation] = useLocation();
   const activeRulesCount = rules.filter(r => r.enabled).length;
   const approvedCount = feed.filter(i => i.status === 'APPROVED' || i.status === 'AUTO_APPROVED').length;
   const blockedCount = feed.filter(i => i.status === 'BLOCKED').length;
@@ -13,6 +17,10 @@ export default function Agent() {
   const totalSpent = feed
     .filter(i => i.status === 'APPROVED' || i.status === 'AUTO_APPROVED')
     .reduce((sum, i) => sum + i.amount, 0);
+
+  const truncatedAddress = address 
+    ? `${address.slice(0, 6)}...${address.slice(-4)}` 
+    : null;
 
   return (
     <div className="flex flex-col min-h-full pb-8">
@@ -34,7 +42,7 @@ export default function Agent() {
         
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/8 border border-emerald-500/10 text-[10px] font-medium text-emerald-400/80">
           <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-          Active · verified on Base
+          Active
         </div>
       </div>
 
@@ -53,7 +61,11 @@ export default function Agent() {
           <div className="space-y-3">
             <StateRow label="Status" value="Active" valueColor="text-emerald-400" />
             <StateRow label="Identity" value="scout.base.eth" mono />
-            <StateRow label="Spending from" value="Your connected wallet" />
+            <StateRow 
+              label="Spending from" 
+              value={isConnected && truncatedAddress ? truncatedAddress : 'No wallet connected'} 
+              valueColor={isConnected ? undefined : 'text-muted-foreground/40'}
+            />
             <StateRow label="Settlement" value="USDC on Base" />
             <StateRow label="Spent this month" value={`$${totalSpent.toFixed(2)}`} />
             <StateRow label="Constraints" value={`${activeRulesCount} active rules`} />
@@ -87,7 +99,10 @@ export default function Agent() {
           </div>
         )}
 
-        <div className="bg-card rounded-2xl p-4 border border-border/30 flex items-center justify-between cursor-pointer hover:bg-white/[0.02] active:bg-white/[0.04] transition-colors">
+        <div 
+          onClick={() => setLocation('/rules')}
+          className="bg-card rounded-2xl p-4 border border-border/30 flex items-center justify-between cursor-pointer hover:bg-white/[0.02] active:bg-white/[0.04] transition-colors"
+        >
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-primary/8 flex items-center justify-center">
               <Shield size={16} className="text-primary/80" />
@@ -99,24 +114,11 @@ export default function Agent() {
           </div>
           <ArrowRight size={14} className="text-muted-foreground/20" />
         </div>
-
-        <div className="bg-card rounded-2xl p-4 border border-border/30 flex items-center justify-between cursor-pointer hover:bg-white/[0.02] active:bg-white/[0.04] transition-colors">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-white/[0.04] flex items-center justify-center">
-              <Clock size={16} className="text-muted-foreground/50" />
-            </div>
-            <div>
-              <h3 className="text-[13px] font-semibold text-foreground">Recent Actions</h3>
-              <p className="text-[10px] text-muted-foreground/40">View Scout's activity log</p>
-            </div>
-          </div>
-          <ArrowRight size={14} className="text-muted-foreground/20" />
-        </div>
       </div>
 
       <div className="mt-auto pt-10 text-center pb-4">
         <p className="text-[10px] text-muted-foreground/20 font-medium tracking-widest uppercase">
-          Verified on Base · ERC-8004 #4721
+          ERC-8004 · Base Sepolia
         </p>
       </div>
     </div>

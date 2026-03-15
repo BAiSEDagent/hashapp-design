@@ -13,6 +13,7 @@ export default function Receipt() {
   if (!item) return <div className="p-8 text-center mt-20 text-muted-foreground">Receipt not found</div>;
 
   const isBlocked = item.status === 'BLOCKED' || item.status === 'DECLINED';
+  const hasRealProof = item.isReal && item.txHash;
 
   return (
     <motion.div 
@@ -80,19 +81,27 @@ export default function Receipt() {
             </div>
           </div>
 
-          {(item.status === 'APPROVED' || item.status === 'AUTO_APPROVED') && item.txHash && (
+          {hasRealProof && (
             <div className="mt-8 text-center space-y-2">
-              <p className="text-[11px] text-muted-foreground/30 flex items-center justify-center gap-1.5 tracking-wide">
-                Settled in USDC on Base · proof available
+              <p className="text-[11px] text-emerald-400/50 flex items-center justify-center gap-1.5 tracking-wide">
+                Settled on Base Sepolia · onchain proof
               </p>
               <a 
-                href={`https://basescan.org/tx/${item.txHash}`}
+                href={`https://sepolia.basescan.org/tx/${item.txHash}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[10px] font-mono text-muted-foreground/20 flex items-center justify-center gap-1 cursor-pointer hover:text-muted-foreground/40 transition-colors"
+                className="text-[10px] font-mono text-muted-foreground/30 flex items-center justify-center gap-1 cursor-pointer hover:text-muted-foreground/50 transition-colors"
               >
-                tx {item.txHash.slice(0, 6)}...{item.txHash.slice(-4)} <ExternalLink size={8} />
+                tx {item.txHash!.slice(0, 6)}...{item.txHash!.slice(-4)} <ExternalLink size={8} />
               </a>
+            </div>
+          )}
+
+          {!hasRealProof && (item.status === 'APPROVED' || item.status === 'AUTO_APPROVED') && (
+            <div className="mt-8 text-center">
+              <p className="text-[10px] text-muted-foreground/20 tracking-wide">
+                Demo transaction · no onchain proof
+              </p>
             </div>
           )}
         </div>

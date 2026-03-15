@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ShieldCheck } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { useDemo, type FeedItem, type StatusType } from '@/context/DemoContext';
 import { AvatarIcon } from '@/components/ui/AvatarIcon';
@@ -41,29 +41,21 @@ export default function Activity() {
         </div>
         <div className="flex overflow-x-auto gap-4 px-6 pb-2 snap-x snap-mandatory hide-scrollbar">
           {TRUSTED_DESTINATIONS.map((payee) => (
-            <motion.div 
+            <div 
               key={payee.name} 
-              className="flex flex-col items-center gap-2 snap-start shrink-0 cursor-pointer group"
-              whileTap={{ scale: 0.95 }}
+              className="flex flex-col items-center gap-2 snap-start shrink-0"
             >
               <div className="relative">
-                <AvatarIcon initial={payee.initial} colorClass={payee.color} size="md" className="shadow-md ring-1 ring-white/[0.06] group-hover:ring-white/[0.12] transition-all" />
+                <AvatarIcon initial={payee.initial} colorClass={payee.color} size="md" className="shadow-md ring-1 ring-white/[0.06]" />
                 <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-[1.5px] border-background flex items-center justify-center bg-blue-500 shadow-sm">
                   <ShieldCheck size={8} className="text-white" />
                 </div>
               </div>
-              <span className="text-[10px] font-medium text-muted-foreground/50 w-16 text-center truncate group-hover:text-muted-foreground/80 transition-colors">
+              <span className="text-[10px] font-medium text-muted-foreground/50 w-16 text-center truncate">
                 {payee.name}
               </span>
-            </motion.div>
+            </div>
           ))}
-        </div>
-      </div>
-
-      <div className="px-6 mb-6">
-        <div className="relative flex items-center w-full h-10 rounded-xl bg-white/[0.03] border border-white/[0.06] text-muted-foreground/40 px-4 hover:border-white/[0.1] transition-colors cursor-pointer">
-          <Search size={14} className="mr-3 opacity-60" />
-          <span className="text-[12px]">Search activity or destinations</span>
         </div>
       </div>
 

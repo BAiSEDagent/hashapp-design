@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 export type StatusType = 'APPROVED' | 'AUTO_APPROVED' | 'PENDING' | 'BLOCKED' | 'DECLINED';
 
@@ -16,6 +16,7 @@ export interface FeedItem {
   timestamp: string;
   category: string;
   txHash?: string;
+  isReal?: boolean;
 }
 
 export interface SpendPermission {
@@ -27,6 +28,8 @@ export interface SpendPermission {
   cadence: 'monthly' | 'weekly' | 'daily';
   state: 'active' | 'revoked' | 'pending';
   ruledBy: string;
+  txHash?: string;
+  isReal?: boolean;
 }
 
 export interface Rule {
@@ -41,7 +44,7 @@ interface DemoState {
   rules: Rule[];
   spendPermissions: SpendPermission[];
   stage: 'INITIAL' | 'PENDING_ADDED' | 'APPROVED' | 'RULE_DISABLED' | 'BLOCKED_ADDED';
-  approvePending: (id: string) => void;
+  approvePending: (id: string, realTxHash?: string) => void;
   declinePending: (id: string) => void;
   toggleRule: (id: string) => void;
 }
@@ -60,7 +63,6 @@ const INITIAL_FEED: FeedItem[] = [
     statusMessage: 'Auto-approved — within daily budget',
     timestamp: '11:42 AM',
     category: 'Research Tools',
-    txHash: '0x8f2a1c4d9e7b3f6a0d5c8e2b4a7f1d9c3e6b8a0f2d5c7e9b1a4d6f8c0e3a5c912'
   },
   {
     id: 'tx-3',
@@ -89,7 +91,6 @@ const INITIAL_FEED: FeedItem[] = [
     statusMessage: 'Approved',
     timestamp: '4:20 PM',
     category: 'API Services',
-    txHash: '0x4a2f7b1e9c3d5a8f0e2b6c4d7a9f1e3c5b8d0a2f4e6c8b1d3a5f7e9c0b2d4e91b'
   },
   {
     id: 'tx-5',
@@ -104,7 +105,6 @@ const INITIAL_FEED: FeedItem[] = [
     statusMessage: 'Auto-approved',
     timestamp: '1:10 PM',
     category: 'Data Services',
-    txHash: '0x1b9c3e5a7d0f2c4b6e8a1d3f5c7b9e0a2d4f6c8b1e3a5d7f9c0b2e4a6d8f44a'
   },
   {
     id: 'tx-6',
@@ -119,7 +119,6 @@ const INITIAL_FEED: FeedItem[] = [
     statusMessage: 'Approved',
     timestamp: '10:05 AM',
     category: 'Research Reports',
-    txHash: '0x99dd4e7a1b3c5f8d0e2a6b9c1d4f7e3a5b8c0d2e6a9f1b3c5d8e0a2f4b7c2a11'
   }
 ];
 
@@ -154,70 +153,99 @@ const INITIAL_RULES: Rule[] = [
   { id: 'r5', name: 'New vendor approval', description: 'Require your approval before paying a new vendor', enabled: true },
 ];
 
+const STORAGE_KEY = 'hashapp_demo_state';
+
+function loadPersistedState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.version === 2) return parsed;
+    }
+  } catch {}
+  return null;
+}
+
+function persistState(feed: FeedItem[], rules: Rule[], spendPermissions: SpendPermission[], stage: DemoState['stage']) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      version: 2,
+      feed,
+      rules,
+      spendPermissions,
+      stage,
+    }));
+  } catch {}
+}
+
 const DemoContext = createContext<DemoState | undefined>(undefined);
 
 export function DemoProvider({ children }: { children: React.ReactNode }) {
-  const [feed, setFeed] = useState<FeedItem[]>(INITIAL_FEED);
-  const [rules, setRules] = useState<Rule[]>(INITIAL_RULES);
-  const [spendPermissions, setSpendPermissions] = useState<SpendPermission[]>(INITIAL_SPEND_PERMISSIONS);
-  const [stage, setStage] = useState<DemoState['stage']>('INITIAL');
+  const persisted = loadPersistedState();
+  const [feed, setFeed] = useState<FeedItem[]>(persisted?.feed ?? INITIAL_FEED);
+  const [rules, setRules] = useState<Rule[]>(persisted?.rules ?? INITIAL_RULES);
+  const [spendPermissions, setSpendPermissions] = useState<SpendPermission[]>(persisted?.spendPermissions ?? INITIAL_SPEND_PERMISSIONS);
+  const [stage, setStage] = useState<DemoState['stage']>(persisted?.stage ?? 'INITIAL');
 
   useEffect(() => {
-    if (stage === 'INITIAL') {
-      const timer = setTimeout(() => {
-        const pendingTx: FeedItem = {
-          id: 'tx-1-pending',
-          dateGroup: 'TODAY',
-          merchant: 'DataStream Pro',
-          merchantColor: 'bg-purple-600',
-          merchantInitial: 'D',
-          amount: 89.00,
-          amountStr: '$89.00',
-          intent: "Scout is requesting a recurring spend permission — $89 USDC/mo for real-time market data from DataStream Pro",
-          status: 'PENDING',
-          statusMessage: 'Spend permission · needs approval',
-          timestamp: 'Just now',
-          category: 'Data Services'
-        };
-        setFeed(prev => [pendingTx, ...prev]);
-        setStage('PENDING_ADDED');
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
+    persistState(feed, rules, spendPermissions, stage);
+  }, [feed, rules, spendPermissions, stage]);
+
+  useEffect(() => {
+    if (stage !== 'INITIAL') return;
+    const timer = setTimeout(() => {
+      const pendingTx: FeedItem = {
+        id: 'tx-1-pending',
+        dateGroup: 'TODAY',
+        merchant: 'DataStream Pro',
+        merchantColor: 'bg-purple-600',
+        merchantInitial: 'D',
+        amount: 89.00,
+        amountStr: '$89.00',
+        intent: "Scout is requesting a recurring spend permission — $89 USDC/mo for real-time market data from DataStream Pro",
+        status: 'PENDING',
+        statusMessage: 'Spend permission · needs approval',
+        timestamp: 'Just now',
+        category: 'Data Services'
+      };
+      setFeed(prev => [pendingTx, ...prev]);
+      setStage('PENDING_ADDED');
+    }, 3000);
+    return () => clearTimeout(timer);
   }, [stage]);
 
   useEffect(() => {
-    if (stage === 'RULE_DISABLED') {
-      const timer = setTimeout(() => {
-        const blockedTx: FeedItem = {
-          id: 'tx-7-blocked',
-          dateGroup: 'TODAY',
-          merchant: 'DataStream Pro',
-          merchantColor: 'bg-purple-600',
-          merchantInitial: 'D',
-          amount: 89.00,
-          amountStr: '$89.00',
-          intent: "Scout attempted first charge under DataStream Pro spend permission",
-          status: 'BLOCKED',
-          statusMessage: 'Blocked — exceeds per-purchase cap',
-          timestamp: 'Just now',
-          category: 'Data Services'
-        };
-        setFeed(prev => [blockedTx, ...prev]);
-        setStage('BLOCKED_ADDED');
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
+    if (stage !== 'RULE_DISABLED') return;
+    const timer = setTimeout(() => {
+      const blockedTx: FeedItem = {
+        id: 'tx-7-blocked',
+        dateGroup: 'TODAY',
+        merchant: 'DataStream Pro',
+        merchantColor: 'bg-purple-600',
+        merchantInitial: 'D',
+        amount: 89.00,
+        amountStr: '$89.00',
+        intent: "Scout attempted first charge under DataStream Pro spend permission",
+        status: 'BLOCKED',
+        statusMessage: 'Blocked — exceeds per-purchase cap',
+        timestamp: 'Just now',
+        category: 'Data Services'
+      };
+      setFeed(prev => [blockedTx, ...prev]);
+      setStage('BLOCKED_ADDED');
+    }, 2000);
+    return () => clearTimeout(timer);
   }, [stage]);
 
-  const approvePending = (id: string) => {
+  const approvePending = useCallback((id: string, realTxHash?: string) => {
     setFeed(prev => prev.map(item => 
       item.id === id 
         ? { 
             ...item, 
             status: 'APPROVED' as StatusType, 
-            statusMessage: 'Approved — spend permission granted',
-            txHash: '0x3c71a8e2f4b6d9c0e1a3f5d7b9c2e4a6f8d0b1c3e5a7f9d2b4c6e8a0f1d3b5d88f'
+            statusMessage: realTxHash ? 'Approved — spend permission granted onchain' : 'Approved — spend permission granted (demo)',
+            txHash: realTxHash,
+            isReal: !!realTxHash,
           } 
         : item
     ));
@@ -230,25 +258,27 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
       cadence: 'monthly',
       state: 'active',
       ruledBy: 'r4',
+      txHash: realTxHash,
+      isReal: !!realTxHash,
     }]);
     if (stage === 'PENDING_ADDED') setStage('APPROVED');
-  };
+  }, [stage]);
 
-  const declinePending = (id: string) => {
+  const declinePending = useCallback((id: string) => {
     setFeed(prev => prev.map(item => 
       item.id === id 
         ? { ...item, status: 'DECLINED' as StatusType, statusMessage: 'Declined by you' } 
         : item
     ));
     if (stage === 'PENDING_ADDED') setStage('APPROVED');
-  };
+  }, [stage]);
 
-  const toggleRule = (id: string) => {
+  const toggleRule = useCallback((id: string) => {
     setRules(prev => prev.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r));
     if (id === 'r4' && stage === 'APPROVED') {
       setStage('RULE_DISABLED');
     }
-  };
+  }, [stage]);
 
   return (
     <DemoContext.Provider value={{ feed, rules, spendPermissions, stage, approvePending, declinePending, toggleRule }}>

@@ -90,7 +90,7 @@ export default function Rules() {
 
       <div className="mt-auto pt-10 text-center pb-4">
         <p className="text-[10px] text-muted-foreground/20 font-medium tracking-widest uppercase">
-          Rules enforced onchain via smart wallet
+          Rules managed by Hashapp
         </p>
       </div>
 

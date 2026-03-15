@@ -58,10 +58,13 @@ Hashapp — consumer-grade dark premium spending app for AI agents. Demo-only fr
 - **Theme**: Dark-only (near-black bg hsl 220 20% 4%), blue accent (hsl 220 60% 55%), mobile-first max-width 430px
 - **Routes**: `/money` (Money — non-custodial wallet allocation), `/` (Activity Feed with trusted destinations rail), `/agent` (Scout Agent Detail), `/rules` (Spending Rules), `/receipt/:id` (Receipt Detail)
 - **Nav tabs**: Money | Activity | Scout | Rules
-- **Money model**: Explicitly non-custodial — funds live in user's connected Base smart wallet with scoped allocation to Scout. Language: "Available for Scout", "USDC from connected wallet", "Hashapp never takes custody"
+- **Money model**: Explicitly non-custodial — funds live in user's connected Base smart wallet with scoped allocation to Scout. Language: "Available for Scout", "USDC · remaining under active rules", "Hashapp never takes custody"
+- **Wallet connection**: wagmi + viem configured for Base Sepolia (injected + Coinbase Wallet connectors). Shows real wallet address when connected, honest "No Wallet Connected" when not. Connect buttons rendered from wagmi connectors list.
 - **Demo Flow**: Load → 3s pause → pending spend permission slides in → user approves → navigate to Rules → toggle off "Block spend permissions (recurring)" → return to Activity → 2s → new blocked entry appears
-- **Key Design**: Intent-aware language ("Scout bought research credits..."), plain-English rules, subtle onchain references ("Settled in USDC on Base · proof available", "Verified on Base · ERC-8004 #4721"), spend permission terminology for recurring charges
-- **Dependencies**: react, framer-motion, wouter, lucide-react, tailwindcss, clsx, tailwind-merge
+- **Honesty rules**: No fake tx hashes in hardcoded feed. Receipt shows "Demo transaction · no onchain proof" for demo items. Basescan links only appear when `isReal && txHash`. Rules footer: "Rules managed by Hashapp" (not "enforced onchain"). Agent footer: "ERC-8004 · Base Sepolia" (no fake token ID). Dead CTAs removed (no "Increase limit", "Adjust budget", "Pause Scout").
+- **Persistence**: localStorage (key: `hashapp_demo_state`, version 2) persists feed, rules, spendPermissions, and stage across refreshes.
+- **Key Design**: Intent-aware language ("Scout bought research credits..."), plain-English rules, honest onchain references only when backed by real proof, spend permission terminology for recurring charges
+- **Dependencies**: react, framer-motion, wouter, lucide-react, tailwindcss, clsx, tailwind-merge, wagmi, viem
 
 ### `artifacts/api-server` (`@workspace/api-server`)
 

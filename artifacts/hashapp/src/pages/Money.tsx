@@ -1,10 +1,16 @@
 import React from 'react';
-import { Wallet, ArrowRight, Shield, Pause, ArrowUpRight, RefreshCw } from 'lucide-react';
+import { Wallet, Shield, ArrowRight } from 'lucide-react';
+import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { useDemo, type SpendPermission } from '@/context/DemoContext';
 import { AvatarIcon } from '@/components/ui/AvatarIcon';
+import { useLocation } from 'wouter';
 
 export default function Money() {
   const { feed, rules, spendPermissions } = useDemo();
+  const { address, isConnected, chain } = useAccount();
+  const { connect, connectors } = useConnect();
+  const { disconnect } = useDisconnect();
+  const [, setLocation] = useLocation();
 
   const spent = feed
     .filter(i => i.status === 'APPROVED' || i.status === 'AUTO_APPROVED')
@@ -15,6 +21,10 @@ export default function Money() {
   const activeRulesCount = rules.filter(r => r.enabled).length;
   const activePermissions = spendPermissions.filter(p => p.state === 'active');
   const purchaseCount = feed.filter(i => i.status === 'APPROVED' || i.status === 'AUTO_APPROVED').length;
+
+  const truncatedAddress = address 
+    ? `${address.slice(0, 6)}...${address.slice(-4)}` 
+    : null;
 
   return (
     <div className="flex flex-col min-h-full pb-8">
@@ -75,7 +85,10 @@ export default function Money() {
           </div>
         )}
 
-        <div className="bg-card rounded-2xl p-4 border border-border/30 flex items-center gap-4">
+        <div 
+          onClick={() => setLocation('/rules')}
+          className="bg-card rounded-2xl p-4 border border-border/30 flex items-center gap-4 cursor-pointer hover:bg-white/[0.02] active:bg-white/[0.04] transition-colors"
+        >
           <div className="w-8 h-8 rounded-full bg-primary/8 flex items-center justify-center shrink-0">
             <Shield size={16} className="text-primary/80" />
           </div>
@@ -86,34 +99,61 @@ export default function Money() {
           <ArrowRight size={14} className="text-muted-foreground/25 shrink-0" />
         </div>
 
-        <div className="flex flex-col gap-2 mt-2">
-          <h3 className="text-[10px] font-semibold text-muted-foreground/35 uppercase tracking-[0.2em] pl-1">
-            Manage
-          </h3>
-          <ActionRow icon={<ArrowUpRight size={16} />} label="Increase Scout's limit" sub="Allocate more USDC from your wallet" />
-          <ActionRow icon={<RefreshCw size={16} />} label="Adjust Scout's budget" sub="Change the monthly spending allocation" />
-          <ActionRow icon={<Pause size={16} />} label="Pause Scout" sub="Temporarily freeze all spend permissions" />
-        </div>
-
         <div className="bg-card rounded-2xl p-4 border border-border/30 mt-1">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-7 h-7 rounded-full bg-blue-500/10 flex items-center justify-center">
-              <Wallet size={13} className="text-blue-400/80" />
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-7 h-7 rounded-full bg-blue-500/10 flex items-center justify-center">
+                <Wallet size={13} className="text-blue-400/80" />
+              </div>
+              <div>
+                <p className="text-[12px] font-medium text-foreground">
+                  {isConnected ? 'Connected Wallet' : 'No Wallet Connected'}
+                </p>
+                {isConnected && truncatedAddress && (
+                  <p className="text-[10px] text-muted-foreground/35 font-mono">
+                    {truncatedAddress} · {chain?.name || 'Base Sepolia'}
+                  </p>
+                )}
+              </div>
             </div>
-            <div>
-              <p className="text-[12px] font-medium text-foreground">Connected Wallet</p>
-              <p className="text-[10px] text-muted-foreground/35 font-mono">0x8a4f...c2e1 · Base</p>
-            </div>
+            {isConnected ? (
+              <button 
+                onClick={() => disconnect()}
+                className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors"
+              >
+                Disconnect
+              </button>
+            ) : null}
           </div>
-          <p className="text-[10px] text-muted-foreground/35 leading-relaxed pl-10">
-            Funds stay in your smart wallet. Scout operates through scoped permissions — Hashapp never takes custody.
-          </p>
+
+          {isConnected ? (
+            <p className="text-[10px] text-muted-foreground/35 leading-relaxed pl-10">
+              Funds stay in your smart wallet. Scout operates through scoped permissions — Hashapp never takes custody.
+            </p>
+          ) : (
+            <div className="pl-10">
+              <p className="text-[10px] text-muted-foreground/35 leading-relaxed mb-3">
+                Connect a wallet to enable real spend permissions on Base. Hashapp never takes custody of your funds.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {connectors.map((connector) => (
+                  <button
+                    key={connector.uid}
+                    onClick={() => connect({ connector })}
+                    className="text-[11px] font-medium text-primary/80 bg-primary/8 hover:bg-primary/12 px-3 py-1.5 rounded-lg transition-colors"
+                  >
+                    {connector.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="mt-auto pt-8 text-center pb-4">
         <p className="text-[10px] text-muted-foreground/20 font-medium tracking-widest uppercase">
-          Settled in USDC on Base
+          Base Sepolia · Testnet
         </p>
       </div>
     </div>
@@ -135,21 +175,6 @@ function SpendPermissionRow({ permission }: { permission: SpendPermission }) {
         <span className="text-[13px] font-semibold tabular-nums">${permission.amount}</span>
         <span className="text-[10px] text-muted-foreground/40">{cadenceLabel[permission.cadence]}</span>
       </div>
-    </div>
-  );
-}
-
-function ActionRow({ icon, label, sub }: { icon: React.ReactNode; label: string; sub: string }) {
-  return (
-    <div className="flex items-center gap-3.5 p-3 rounded-xl hover:bg-white/[0.02] active:bg-white/[0.04] transition-colors cursor-pointer bg-card border border-border/30">
-      <div className="w-8 h-8 rounded-full bg-white/[0.04] flex items-center justify-center text-foreground/60 shrink-0">
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-[13px] font-semibold text-foreground">{label}</p>
-        <p className="text-[10px] text-muted-foreground/40">{sub}</p>
-      </div>
-      <ArrowRight size={13} className="text-muted-foreground/20 shrink-0" />
     </div>
   );
 }
