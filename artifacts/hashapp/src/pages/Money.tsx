@@ -1,8 +1,10 @@
 import React from 'react';
-import { Wallet, Shield, ArrowRight, ExternalLink, RefreshCw } from 'lucide-react';
+import { Wallet, Shield, ArrowRight, RefreshCw } from 'lucide-react';
 import { useAccount, useConnect, useDisconnect, useReadContract } from 'wagmi';
 import { useDemo, type SpendPermission } from '@/context/DemoContext';
 import { AvatarIcon } from '@/components/ui/AvatarIcon';
+import { AgentAvatar } from '@/components/AgentAvatar';
+import { TruthBadge } from '@/components/TruthBadge';
 import { useLocation } from 'wouter';
 import { USDC_BASE_SEPOLIA } from '@/config/spendPermission';
 import { formatUnits } from 'viem';
@@ -45,7 +47,6 @@ export default function Money() {
   const activePermissions = spendPermissions.filter(p => p.state === 'active');
   const purchaseCount = feed.filter(i => i.status === 'APPROVED' || i.status === 'AUTO_APPROVED').length;
 
-  // Permission allowance total (sum of active spend permissions)
   const totalPermissionAllowance = activePermissions.reduce((sum, p) => sum + p.amount, 0);
 
   const truncatedAddress = address
@@ -61,19 +62,18 @@ export default function Money() {
 
       <div className="px-6 pt-5 flex flex-col gap-4">
 
-        {/* Main balance card */}
         <div className="relative bg-card rounded-2xl p-6 border border-border/50 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.03] via-transparent to-transparent" />
           <div className="relative">
-            <div className="flex items-center gap-2 mb-2">
-              <Wallet size={13} className="text-muted-foreground/50" />
-              <span className="text-[12px] text-muted-foreground/60 font-medium">
-                {isConnected ? 'Wallet Balance (USDC)' : 'Available for Scout'}
-              </span>
-            </div>
-
             {isConnected ? (
               <>
+                <div className="flex items-center gap-2 mb-2">
+                  <Wallet size={13} className="text-muted-foreground/50" />
+                  <span className="text-[12px] text-muted-foreground/60 font-medium">
+                    Wallet Balance (USDC)
+                  </span>
+                  <TruthBadge type="onchain" />
+                </div>
                 <h2 className="text-[48px] font-bold tracking-tighter text-foreground leading-none mb-1.5">
                   {usdcBalance !== null ? `$${usdcBalance}` : '—'}
                 </h2>
@@ -83,11 +83,19 @@ export default function Money() {
               </>
             ) : (
               <>
+                <div className="flex items-center gap-2 mb-2">
+                  <Wallet size={13} className="text-muted-foreground/50" />
+                  <span className="text-[12px] text-muted-foreground/60 font-medium">
+                    Wallet Balance
+                  </span>
+                </div>
                 <h2 className="text-[48px] font-bold tracking-tighter text-foreground leading-none mb-1.5">
                   —
                 </h2>
-                <p className="text-[12px] text-muted-foreground/40">
-                  Connect a wallet to see your balance
+                <p className="text-[12px] text-muted-foreground/40 leading-relaxed">
+                  Connect a wallet to see your real USDC balance.
+                  <br />
+                  <span className="text-muted-foreground/30">Spend permissions and activity below are demo data — not drawn from a real wallet.</span>
                 </p>
               </>
             )}
@@ -99,7 +107,10 @@ export default function Money() {
                   <span className="text-[13px] font-semibold tabular-nums">${totalPermissionAllowance}/mo</span>
                 </div>
                 <div className="flex justify-between items-center mt-1">
-                  <span className="text-[10px] text-muted-foreground/30">Demo spend tracked</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-muted-foreground/30">Spend tracked</span>
+                    <TruthBadge type="demo" />
+                  </div>
                   <span className="text-[10px] text-muted-foreground/30 tabular-nums">${spent.toFixed(2)}</span>
                 </div>
               </div>
@@ -107,7 +118,6 @@ export default function Money() {
           </div>
         </div>
 
-        {/* Stats row */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-card rounded-2xl p-4 border border-border/30">
             <span className="text-[10px] text-muted-foreground/45 font-medium uppercase tracking-wider">Active Permissions</span>
@@ -115,25 +125,29 @@ export default function Money() {
             <p className="text-[10px] text-muted-foreground/30 mt-0.5">${totalPermissionAllowance} USDC/mo</p>
           </div>
           <div className="bg-card rounded-2xl p-4 border border-border/30">
-            <span className="text-[10px] text-muted-foreground/45 font-medium uppercase tracking-wider">Demo spend</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] text-muted-foreground/45 font-medium uppercase tracking-wider">Spend</span>
+              <TruthBadge type="demo" />
+            </div>
             <p className="text-[22px] font-bold tracking-tight mt-1">${spent.toFixed(2)}</p>
             <p className="text-[10px] text-muted-foreground/30 mt-0.5">{purchaseCount} purchases</p>
           </div>
         </div>
 
-        {/* Active spend permissions */}
         {activePermissions.length > 0 && (
           <div className="flex flex-col gap-2 mt-1">
-            <h3 className="text-[10px] font-semibold text-muted-foreground/35 uppercase tracking-[0.2em] pl-1">
-              Active Spend Permissions
-            </h3>
+            <div className="flex items-center gap-2 pl-1">
+              <AgentAvatar size="sm" />
+              <h3 className="text-[10px] font-semibold text-muted-foreground/35 uppercase tracking-[0.2em]">
+                Scout's Spend Permissions
+              </h3>
+            </div>
             {activePermissions.map(perm => (
               <SpendPermissionRow key={perm.id} permission={perm} />
             ))}
           </div>
         )}
 
-        {/* Rules shortcut */}
         <div
           onClick={() => setLocation('/rules')}
           className="bg-card rounded-2xl p-4 border border-border/30 flex items-center gap-4 cursor-pointer hover:bg-white/[0.02] active:bg-white/[0.04] transition-colors"
@@ -148,7 +162,6 @@ export default function Money() {
           <ArrowRight size={14} className="text-muted-foreground/25 shrink-0" />
         </div>
 
-        {/* Wallet connection card */}
         <div className="bg-card rounded-2xl p-4 border border-border/30 mt-1">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
@@ -200,7 +213,6 @@ export default function Money() {
           )}
         </div>
 
-        {/* Demo reset */}
         <button
           onClick={resetDemo}
           className="flex items-center justify-center gap-2 text-[11px] text-muted-foreground/25 hover:text-muted-foreground/50 transition-colors mt-2 py-2"
@@ -221,7 +233,7 @@ export default function Money() {
 
 function SpendPermissionRow({ permission }: { permission: SpendPermission }) {
   const cadenceLabel = { daily: '/day', weekly: '/wk', monthly: '/mo' };
-  const isRealOnchain = permission.isReal && permission.txHash;
+  const badgeType = permission.isReal && permission.txHash ? 'onchain' as const : 'demo' as const;
 
   return (
     <div className="flex items-center gap-3.5 p-3 rounded-xl bg-card border border-border/30 hover:border-border/50 transition-colors">
@@ -231,20 +243,9 @@ function SpendPermissionRow({ permission }: { permission: SpendPermission }) {
           <span className="text-[13px] font-semibold text-foreground">{permission.vendor}</span>
           <div className={`w-[5px] h-[5px] rounded-full shrink-0 ${permission.state === 'active' ? 'bg-emerald-400' : 'bg-rose-400'}`} />
         </div>
-        {isRealOnchain ? (
-          <a
-            href={`https://sepolia.basescan.org/tx/${permission.txHash}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="flex items-center gap-1 text-[10px] text-emerald-400/60 hover:text-emerald-400/90 transition-colors mt-0.5"
-          >
-            <ExternalLink size={8} />
-            Onchain · Basescan
-          </a>
-        ) : (
-          <span className="text-[10px] text-muted-foreground/30 mt-0.5 block">Demo only</span>
-        )}
+        <div className="flex items-center gap-1.5 mt-0.5">
+          <TruthBadge type={badgeType} txHash={permission.txHash} />
+        </div>
       </div>
       <div className="text-right shrink-0">
         <span className="text-[13px] font-semibold tabular-nums">${permission.amount}</span>

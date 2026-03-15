@@ -7,6 +7,8 @@ import { waitForTransactionReceipt } from 'wagmi/actions';
 import { walletConfig } from '@/config/wallet';
 import { useDemo, type FeedItem, type StatusType } from '@/context/DemoContext';
 import { AvatarIcon } from '@/components/ui/AvatarIcon';
+import { AgentAvatar } from '@/components/AgentAvatar';
+import { TruthBadge } from '@/components/TruthBadge';
 import {
   SPEND_PERMISSION_MANAGER_ADDRESS,
   SPEND_PERMISSION_MANAGER_ABI,
@@ -40,7 +42,7 @@ export default function Activity() {
           <p className="text-[11px] text-muted-foreground/50 mt-0.5 font-mono tracking-wide">scout.base.eth</p>
         </div>
         <div className="relative">
-          <AvatarIcon initial="S" colorClass="bg-zinc-800 border border-zinc-700" />
+          <AgentAvatar size="md" />
           <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-background" />
         </div>
       </header>
@@ -115,10 +117,15 @@ function FeedCard({
 }) {
   const isPending = item.status === 'PENDING';
   const isBlocked = item.status === 'BLOCKED' || item.status === 'DECLINED';
+  const isApprovedOrAuto = item.status === 'APPROVED' || item.status === 'AUTO_APPROVED';
 
   if (isPending) {
     return <PendingCard item={item} onApprove={onApprove} onDecline={onDecline} />;
   }
+
+  const badgeType = isApprovedOrAuto
+    ? (item.isReal && item.txHash ? 'onchain' as const : 'demo' as const)
+    : null;
 
   return (
     <motion.div
@@ -144,8 +151,13 @@ function FeedCard({
           </span>
         </div>
         <div className="flex justify-between items-center gap-3">
-          <p className={`text-[11px] truncate leading-relaxed ${isBlocked ? 'text-muted-foreground/35' : 'text-muted-foreground/50'}`}>{item.intent}</p>
-          <StatusDot status={item.status} />
+          <div className="flex items-center gap-2 min-w-0">
+            <p className={`text-[11px] truncate leading-relaxed ${isBlocked ? 'text-muted-foreground/35' : 'text-muted-foreground/50'}`}>{item.intent}</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {badgeType && <TruthBadge type={badgeType} txHash={item.txHash} />}
+            <StatusDot status={item.status} />
+          </div>
         </div>
       </div>
     </motion.div>
@@ -237,6 +249,7 @@ function PendingCard({
           <div className="px-2 py-0.5 rounded-md bg-amber-500/12 border border-amber-500/15">
             <span className="text-[9px] font-semibold text-amber-400/90 uppercase tracking-[0.1em]">Spend Permission Request</span>
           </div>
+          <TruthBadge type="pending" />
         </div>
 
         <div className="flex items-start gap-4">

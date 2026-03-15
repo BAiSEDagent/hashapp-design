@@ -1,8 +1,10 @@
 import { useRoute, Link } from 'wouter';
-import { X, ExternalLink } from 'lucide-react';
+import { X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useDemo } from '@/context/DemoContext';
 import { AvatarIcon } from '@/components/ui/AvatarIcon';
+import { AgentAvatar } from '@/components/AgentAvatar';
+import { TruthBadge } from '@/components/TruthBadge';
 
 export default function Receipt() {
   const [, params] = useRoute('/receipt/:id');
@@ -14,6 +16,7 @@ export default function Receipt() {
 
   const isBlocked = item.status === 'BLOCKED' || item.status === 'DECLINED';
   const hasRealProof = item.isReal && item.txHash;
+  const isApprovedOrAuto = item.status === 'APPROVED' || item.status === 'AUTO_APPROVED';
 
   return (
     <motion.div 
@@ -43,7 +46,7 @@ export default function Receipt() {
             {item.amountStr}
           </h1>
 
-          <div className={`px-4 py-1.5 rounded-full text-[12px] font-medium mb-10 flex items-center gap-2
+          <div className={`px-4 py-1.5 rounded-full text-[12px] font-medium mb-4 flex items-center gap-2
             ${isBlocked ? 'bg-rose-500/8 text-rose-400/80 border border-rose-500/10' : 
               item.status === 'PENDING' ? 'bg-amber-500/8 text-amber-400/80 border border-amber-500/10' : 
               'bg-emerald-500/8 text-emerald-400/80 border border-emerald-500/10'}
@@ -55,6 +58,21 @@ export default function Receipt() {
             `} />
             {item.statusMessage}
           </div>
+
+          {isApprovedOrAuto && (
+            <div className="mb-8">
+              <TruthBadge
+                type={hasRealProof ? 'onchain' : 'demo'}
+                txHash={item.txHash}
+              />
+            </div>
+          )}
+
+          {item.status === 'PENDING' && (
+            <div className="mb-8">
+              <TruthBadge type="pending" />
+            </div>
+          )}
 
           <div className="w-full bg-card rounded-2xl p-5 border border-border/30 space-y-0">
             <DetailRow label="Date & Time" value={`${item.dateGroup === 'TODAY' ? 'Today' : item.dateGroup === 'YESTERDAY' ? 'Yesterday' : item.dateGroup} at ${item.timestamp}`} />
@@ -72,7 +90,7 @@ export default function Receipt() {
                 {isBlocked ? 'Requested by' : 'Authorized by'}
               </span>
               <div className="flex items-center gap-2">
-                <AvatarIcon initial="S" colorClass="bg-zinc-800" size="sm" />
+                <AgentAvatar size="sm" />
                 <div className="text-right">
                   <span className="text-[12px] font-medium block">Scout</span>
                   <span className="text-[9px] text-muted-foreground/30 font-mono tracking-wide">scout.base.eth</span>
@@ -80,30 +98,6 @@ export default function Receipt() {
               </div>
             </div>
           </div>
-
-          {hasRealProof && (
-            <div className="mt-8 text-center space-y-2">
-              <p className="text-[11px] text-emerald-400/50 flex items-center justify-center gap-1.5 tracking-wide">
-                Settled on Base Sepolia · onchain proof
-              </p>
-              <a 
-                href={`https://sepolia.basescan.org/tx/${item.txHash}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[10px] font-mono text-muted-foreground/30 flex items-center justify-center gap-1 cursor-pointer hover:text-muted-foreground/50 transition-colors"
-              >
-                tx {item.txHash!.slice(0, 6)}...{item.txHash!.slice(-4)} <ExternalLink size={8} />
-              </a>
-            </div>
-          )}
-
-          {!hasRealProof && (item.status === 'APPROVED' || item.status === 'AUTO_APPROVED') && (
-            <div className="mt-8 text-center">
-              <p className="text-[10px] text-muted-foreground/20 tracking-wide">
-                Demo transaction · no onchain proof
-              </p>
-            </div>
-          )}
         </div>
       </div>
     </motion.div>
