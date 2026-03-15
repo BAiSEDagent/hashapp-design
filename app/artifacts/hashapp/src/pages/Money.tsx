@@ -4,7 +4,11 @@ import { useAccount, useConnect, useDisconnect, useReadContract } from 'wagmi';
 import { useDemo, type SpendPermission } from '@/context/DemoContext';
 import { AvatarIcon } from '@/components/ui/AvatarIcon';
 import { useLocation } from 'wouter';
-import { USDC_BASE_SEPOLIA } from '@/config/spendPermission';
+import {
+  USDC_BASE_SEPOLIA,
+  SPEND_PERMISSION_MANAGER_ADDRESS,
+  SPEND_PERMISSION_MANAGER_ABI,
+} from '@/config/spendPermission';
 import { formatUnits } from 'viem';
 
 const ERC20_BALANCE_ABI = [
@@ -221,7 +225,28 @@ export default function Money() {
 
 function SpendPermissionRow({ permission }: { permission: SpendPermission }) {
   const cadenceLabel = { daily: '/day', weekly: '/wk', monthly: '/mo' };
-  const isRealOnchain = permission.isReal && permission.txHash;
+  const isRealOnchain = permission.isReal && permission.txHash && permission.permissionStruct;
+
+  const { data: isApproved } = useReadContract({
+    address: SPEND_PERMISSION_MANAGER_ADDRESS,
+    abi: SPEND_PERMISSION_MANAGER_ABI,
+    functionName: 'isApproved',
+    args: permission.permissionStruct
+      ? [{
+          account: permission.permissionStruct.account,
+          spender: permission.permissionStruct.spender,
+          token: permission.permissionStruct.token,
+          allowance: BigInt(permission.permissionStruct.allowance),
+          period: permission.permissionStruct.period,
+          start: permission.permissionStruct.start,
+          end: permission.permissionStruct.end,
+          salt: BigInt(permission.permissionStruct.salt),
+          extraData: permission.permissionStruct.extraData,
+        }]
+      : undefined,
+    chainId: 84532,
+    query: { enabled: !!permission.permissionStruct },
+  });
 
   return (
     <div className="flex items-center gap-3.5 p-3 rounded-xl bg-card border border-border/30 hover:border-border/50 transition-colors">
@@ -232,16 +257,21 @@ function SpendPermissionRow({ permission }: { permission: SpendPermission }) {
           <div className={`w-[5px] h-[5px] rounded-full shrink-0 ${permission.state === 'active' ? 'bg-emerald-400' : 'bg-rose-400'}`} />
         </div>
         {isRealOnchain ? (
-          <a
-            href={`https://sepolia.basescan.org/tx/${permission.txHash}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="flex items-center gap-1 text-[10px] text-emerald-400/60 hover:text-emerald-400/90 transition-colors mt-0.5"
-          >
-            <ExternalLink size={8} />
-            Onchain · Basescan
-          </a>
+          <div className="flex flex-col gap-0.5 mt-0.5">
+            <a
+              href={`https://sepolia.basescan.org/tx/${permission.txHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="flex items-center gap-1 text-[10px] text-emerald-400/60 hover:text-emerald-400/90 transition-colors"
+            >
+              <ExternalLink size={8} />
+              {isApproved ? 'Verified onchain' : 'Tx onchain'}
+            </a>
+            {isApproved === false && (
+              <span className="text-[10px] text-amber-400/60">Awaiting contract verification</span>
+            )}
+          </div>
         ) : (
           <span className="text-[10px] text-muted-foreground/30 mt-0.5 block">Demo only</span>
         )}
