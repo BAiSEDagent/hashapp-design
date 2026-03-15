@@ -95,3 +95,31 @@ Partially fixed / in progress through Replit iterations
 
 ### Notes
 This was a key product-shape correction rather than a visual polish pass.
+
+---
+
+## 2026-03-14 — Base-native spend permission proof
+
+### Source
+- Replit technical agent
+- Base Sepolia proof run
+
+### Findings
+- Base-native SpendPermissionManager can enforce spend cap, expiry, and spender identity without custom Solidity
+- in-bounds spend succeeds onchain
+- over-limit, expired, and wrong-spender cases all reject onchain with named errors
+- payee restriction remains partially app-layer rather than contract-enforced
+
+### Severity
+- High positive finding: Track 1 proof is real
+- Medium caveat: destination/payee enforcement is not fully onchain yet
+
+### Action taken
+- recorded tx hashes, revert names, proof output, and human-readable summary
+- elevated Spend Permissions to a stronger Track 1 submission artifact
+
+### Status
+Verified
+
+### Notes
+This proof materially upgrades Hashapp from a credible product prototype to a product with a real technical spine.

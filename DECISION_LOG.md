@@ -291,3 +291,23 @@ Active
 
 ### Notes
 Best onboarding shape now: Safety foundation → choose Scout or connect your own agent → set first boundary → review first request.
+
+---
+
+## 2026-03-14 — Base-native proof succeeded and materially upgraded Hashapp
+
+### Decision
+Treat the Base-native spend permission proof as a major product milestone and center Track 1 framing around it.
+
+### Why
+Hashapp now has real evidence that scoped spending permissions and onchain rejection of out-of-bounds behavior work on Base using existing audited primitives.
+
+### Alternatives considered
+- continue describing Track 1 purely at the UI/product layer
+- rely on mock architecture claims without proof
+
+### Status
+Active
+
+### Notes
+Strong caveat remains: payee/destination restriction is still partially app-layer rather than fully contract-enforced.
