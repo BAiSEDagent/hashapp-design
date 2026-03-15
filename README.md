@@ -44,4 +44,10 @@ Research agent.
 - human control over autonomous spending
 
 ## Near-Term Goal
-Design the strongest possible Synthesis submission before starting implementation in a separate Hashapp repo.
+Design the strongest possible Synthesis submission and progressively connect the real app/proof work without losing product truth.
+
+## Repo structure
+- `/` — docs, strategy, proof notes, decision logs
+- `/app` — cleaned integration of the Replit truth-pass app/workspace
+
+This repo started as docs-first. It now also contains the integrated app workspace under `app/` so product, proof, and implementation can move together.
