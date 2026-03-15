@@ -1,6 +1,7 @@
 import { useRoute, Link } from 'wouter';
 import { X, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTransactionReceipt, useBlock } from 'wagmi';
 import { useDemo } from '@/context/DemoContext';
 import { AvatarIcon } from '@/components/ui/AvatarIcon';
 
@@ -14,6 +15,27 @@ export default function Receipt() {
 
   const isBlocked = item.status === 'BLOCKED' || item.status === 'DECLINED';
   const hasRealProof = item.isReal && item.txHash;
+
+  const { data: txReceipt } = useTransactionReceipt({
+    hash: item.txHash as `0x${string}` | undefined,
+    chainId: 84532,
+    query: { enabled: !!item.txHash },
+  });
+
+  const { data: block } = useBlock({
+    blockNumber: txReceipt?.blockNumber,
+    chainId: 84532,
+    query: { enabled: !!txReceipt?.blockNumber },
+  });
+
+  const confirmedAt = block?.timestamp
+    ? new Date(Number(block.timestamp) * 1000).toLocaleString([], {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      })
+    : null;
 
   return (
     <motion.div 
@@ -67,6 +89,14 @@ export default function Receipt() {
               label="Approval" 
               value={item.status === 'AUTO_APPROVED' ? 'Auto-approved' : item.status === 'APPROVED' ? 'Human-approved' : item.status === 'BLOCKED' ? 'Blocked by rule' : item.status === 'DECLINED' ? 'Declined' : 'Pending'} 
             />
+            {hasRealProof && txReceipt?.blockNumber && (
+              <>
+                <DetailRow label="Network" value="Base Sepolia" />
+                <DetailRow label="Block" value={txReceipt.blockNumber.toString()} />
+                {confirmedAt && <DetailRow label="Confirmed" value={confirmedAt} />}
+                <DetailRow label="Transaction" value={`${item.txHash!.slice(0, 10)}...${item.txHash!.slice(-8)}`} />
+              </>
+            )}
             <div className="flex items-center justify-between py-4 border-t border-white/[0.05]">
               <span className="text-[11px] text-muted-foreground/40 font-medium">
                 {isBlocked ? 'Requested by' : 'Authorized by'}
