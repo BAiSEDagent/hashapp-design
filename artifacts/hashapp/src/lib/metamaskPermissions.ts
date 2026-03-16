@@ -66,11 +66,10 @@ export async function requestDelegatedPermission(
     }
 
     const permissionsContext = firstPermission.context as `0x${string}`;
-    const signerMeta = firstPermission.signerMeta;
-    if (!signerMeta) {
-      throw new Error('No signer metadata in granted permission');
+    const delegationManager = firstPermission.delegationManager as `0x${string}`;
+    if (!delegationManager) {
+      throw new Error('No delegationManager in granted permission');
     }
-    const delegationManager = signerMeta.delegationManager as `0x${string}`;
 
     return {
       permissionsContext,
