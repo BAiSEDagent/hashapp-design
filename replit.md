@@ -81,6 +81,8 @@ Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` 
 - App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
 - Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
 - Delegation route: `src/routes/delegation.ts` — `POST /api/delegation/spend` executes ERC-7710 delegated USDC transfers server-side using `SCOUT_PRIVATE_KEY`. Enforces token allowlist (USDC only), delegation manager address check, amount bounds ($0–$1000), and address format validation.
+- Swap route: `src/routes/swap.ts` — `POST /api/swap` executes real token swaps on Base Sepolia via Uniswap Trading API. Uses the 3-step flow (check_approval → quote → swap), signs and broadcasts with Scout's wallet (`SCOUT_PRIVATE_KEY`). Safety: token allowlist (ETH + USDC), per-swap cap (0.01 ETH / 50 USDC), slippage ceiling (2%), CLASSIC routing only.
+- Uniswap service: `src/lib/uniswap.ts` — wraps Uniswap Trading API 3-step flow (checkApproval, getQuote, executeSwap). Forces CLASSIC routing, strips null permitData, uses `UNISWAP_API_KEY` env var.
 - Depends on: `@workspace/db`, `@workspace/api-zod`
 - `pnpm --filter @workspace/api-server run dev` — run the dev server
 - `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
