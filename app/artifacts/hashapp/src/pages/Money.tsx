@@ -1,5 +1,5 @@
-import React from 'react';
-import { Wallet, Shield, ArrowRight, RefreshCw } from 'lucide-react';
+import React, { useState } from 'react';
+import { Wallet, Shield, ArrowRight, RefreshCw, Loader2 } from 'lucide-react';
 import { useAccount, useConnect, useDisconnect, useReadContract } from 'wagmi';
 import { useDemo, type SpendPermission } from '@/context/DemoContext';
 import { AvatarIcon } from '@/components/ui/AvatarIcon';
@@ -24,7 +24,7 @@ const ERC20_BALANCE_ABI = [
 ] as const;
 
 export default function Money() {
-  const { feed, rules, spendPermissions, resetDemo } = useDemo();
+  const { feed, rules, spendPermissions, resetDemo, recordExecutedSpend } = useDemo();
   const { address, isConnected, chain } = useAccount();
   const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
@@ -147,7 +147,7 @@ export default function Money() {
               </h3>
             </div>
             {activePermissions.map(perm => (
-              <SpendPermissionRow key={perm.id} permission={perm} />
+              <SpendPermissionRow key={perm.id} permission={perm} onSpendExecuted={recordExecutedSpend} />
             ))}
           </div>
         )}
@@ -235,10 +235,17 @@ export default function Money() {
   );
 }
 
-function SpendPermissionRow({ permission }: { permission: SpendPermission }) {
+function SpendPermissionRow({
+  permission,
+  onSpendExecuted,
+}: {
+  permission: SpendPermission;
+  onSpendExecuted: (permissionId: string, amount: number, txHash: `0x${string}`) => void;
+}) {
   const cadenceLabel = { daily: '/day', weekly: '/wk', monthly: '/mo' };
-
   const permStruct = permission.permissionStruct;
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [spendError, setSpendError] = useState<string | null>(null);
 
   const { data: isApprovedOnchain } = useReadContract({
     address: SPEND_PERMISSION_MANAGER_ADDRESS,
@@ -267,6 +274,37 @@ function SpendPermissionRow({ permission }: { permission: SpendPermission }) {
     badgeType = 'demo';
   }
 
+  const canExecuteSpend = badgeType === 'onchain' && !!permStruct;
+
+  const handleExecuteSpend = async () => {
+    if (!permStruct) return;
+    setIsExecuting(true);
+    setSpendError(null);
+
+    try {
+      const response = await fetch('/api/test/spend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          permission: permStruct,
+          value: '5000000',
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok || !result?.hash) {
+        throw new Error(result?.error || 'Spend execution failed');
+      }
+
+      onSpendExecuted(permission.id, 5, result.hash as `0x${string}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Spend execution failed';
+      setSpendError(message.length > 90 ? `${message.slice(0, 90)}…` : message);
+    } finally {
+      setIsExecuting(false);
+    }
+  };
+
   return (
     <div className="flex items-center gap-3.5 p-3 rounded-xl bg-card border border-border/30 hover:border-border/50 transition-colors">
       <AvatarIcon initial={permission.vendorInitial} colorClass={permission.vendorColor} size="sm" />
@@ -275,9 +313,20 @@ function SpendPermissionRow({ permission }: { permission: SpendPermission }) {
           <span className="text-[13px] font-semibold text-foreground">{permission.vendor}</span>
           <div className={`w-[5px] h-[5px] rounded-full shrink-0 ${permission.state === 'active' ? 'bg-emerald-400' : 'bg-rose-400'}`} />
         </div>
-        <div className="flex items-center gap-1.5 mt-0.5">
+        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
           <TruthBadge type={badgeType} txHash={permission.txHash} />
+          {canExecuteSpend && (
+            <button
+              onClick={handleExecuteSpend}
+              disabled={isExecuting}
+              className="text-[10px] font-medium text-primary/80 hover:text-primary transition-colors disabled:opacity-50 flex items-center gap-1"
+            >
+              {isExecuting ? <Loader2 size={10} className="animate-spin" /> : null}
+              Run $5 spend
+            </button>
+          )}
         </div>
+        {spendError && <p className="text-[10px] text-rose-400/80 mt-1">{spendError}</p>}
       </div>
       <div className="text-right shrink-0">
         <span className="text-[13px] font-semibold tabular-nums">${permission.amount}</span>

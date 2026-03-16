@@ -68,6 +68,7 @@ interface DemoState {
   declinePending: (id: string) => void;
   toggleRule: (id: string) => void;
   resetDemo: () => void;
+  recordExecutedSpend: (permissionId: string, amount: number, txHash: `0x${string}`) => void;
 }
 
 const INITIAL_FEED: FeedItem[] = [
@@ -337,8 +338,39 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     setStage('INITIAL');
   }, []);
 
+  const recordExecutedSpend = useCallback((permissionId: string, amount: number, txHash: `0x${string}`) => {
+    const permission = spendPermissions.find((p) => p.id === permissionId);
+    if (!permission) return;
+
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const suffix = hours >= 12 ? 'PM' : 'AM';
+    const displayHour = ((hours + 11) % 12) + 1;
+
+    const spendItem: FeedItem = {
+      id: `tx-spend-${Date.now()}`,
+      dateGroup: 'TODAY',
+      merchant: permission.vendor,
+      merchantColor: permission.vendorColor,
+      merchantInitial: permission.vendorInitial,
+      amount,
+      amountStr: `$${amount.toFixed(2)}`,
+      intent: `Scout executed a real spend under the approved ${permission.vendor} permission`,
+      status: 'APPROVED',
+      statusMessage: 'Spent under approved permission — verified onchain',
+      timestamp: `${displayHour}:${minutes} ${suffix}`,
+      category: 'Data Services',
+      txHash,
+      isReal: true,
+      onchainVerified: true,
+    };
+
+    setFeed(prev => [spendItem, ...prev]);
+  }, [spendPermissions]);
+
   return (
-    <DemoContext.Provider value={{ feed, rules, spendPermissions, stage, agentAvatarUrl, setAgentAvatarUrl, approvePending, declinePending, toggleRule, resetDemo }}>
+    <DemoContext.Provider value={{ feed, rules, spendPermissions, stage, agentAvatarUrl, setAgentAvatarUrl, approvePending, declinePending, toggleRule, resetDemo, recordExecutedSpend }}>
       {children}
     </DemoContext.Provider>
   );
