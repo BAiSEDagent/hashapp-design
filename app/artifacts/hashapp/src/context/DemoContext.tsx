@@ -18,6 +18,9 @@ export interface FeedItem {
   txHash?: string;
   isReal?: boolean;
   onchainVerified?: boolean;
+  permissionsContext?: `0x${string}`;
+  delegationManager?: `0x${string}`;
+  isDelegation?: boolean;
 }
 
 export interface SpendPermission {
@@ -43,6 +46,9 @@ export interface SpendPermission {
     salt: string;
     extraData: `0x${string}`;
   };
+  permissionsContext?: `0x${string}`;
+  delegationManager?: `0x${string}`;
+  isDelegation?: boolean;
 }
 
 export interface Rule {
@@ -64,11 +70,18 @@ interface DemoState {
     realTxHash?: string,
     permissionStruct?: SpendPermission['permissionStruct'],
     onchainVerified?: boolean,
+    delegationFields?: {
+      permissionsContext: `0x${string}`;
+      delegationManager: `0x${string}`;
+    },
+  ) => void;
+  recordDelegationSpend: (
+    permissionId: string,
+    txHash: string,
   ) => void;
   declinePending: (id: string) => void;
   toggleRule: (id: string) => void;
   resetDemo: () => void;
-  recordExecutedSpend: (permissionId: string, amount: number, txHash: `0x${string}`) => void;
 }
 
 const INITIAL_FEED: FeedItem[] = [
@@ -183,7 +196,7 @@ function loadPersistedState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed.version === 3) return parsed;
+      if (parsed.version === 4) return parsed;
     }
   } catch {}
   return null;
@@ -192,7 +205,7 @@ function loadPersistedState() {
 function persistState(feed: FeedItem[], rules: Rule[], spendPermissions: SpendPermission[], stage: DemoState['stage']) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      version: 3,
+      version: 4,
       feed,
       rules,
       spendPermissions,
@@ -284,16 +297,28 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     realTxHash?: string,
     permissionStruct?: SpendPermission['permissionStruct'],
     onchainVerified?: boolean,
+    delegationFields?: {
+      permissionsContext: `0x${string}`;
+      delegationManager: `0x${string}`;
+    },
   ) => {
+    const isDelegation = !!delegationFields;
     setFeed(prev => prev.map(item => 
       item.id === id 
         ? { 
             ...item, 
             status: 'APPROVED' as StatusType, 
-            statusMessage: realTxHash ? 'Approved — spend permission granted onchain' : 'Approved — spend permission granted (demo)',
+            statusMessage: isDelegation
+              ? 'Approved — delegation granted via MetaMask'
+              : realTxHash
+                ? 'Approved — spend permission granted onchain'
+                : 'Approved — spend permission granted (demo)',
             txHash: realTxHash,
-            isReal: !!realTxHash,
-            onchainVerified,
+            isReal: !!realTxHash || isDelegation,
+            onchainVerified: isDelegation ? true : onchainVerified,
+            permissionsContext: delegationFields?.permissionsContext,
+            delegationManager: delegationFields?.delegationManager,
+            isDelegation,
           } 
         : item
     ));
@@ -307,12 +332,43 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
       state: 'active',
       ruledBy: 'r4',
       txHash: realTxHash,
-      isReal: !!realTxHash,
-      onchainVerified,
+      isReal: !!realTxHash || isDelegation,
+      onchainVerified: isDelegation ? true : onchainVerified,
       permissionStruct,
+      permissionsContext: delegationFields?.permissionsContext,
+      delegationManager: delegationFields?.delegationManager,
+      isDelegation,
     }]);
     if (stage === 'PENDING_ADDED') setStage('APPROVED');
   }, [stage]);
+
+  const recordDelegationSpend = useCallback((
+    permissionId: string,
+    txHash: string,
+  ) => {
+    const perm = spendPermissions.find(p => p.id === permissionId);
+    if (!perm) return;
+
+    const spendItem: FeedItem = {
+      id: `spend-${Date.now()}`,
+      dateGroup: 'TODAY',
+      merchant: perm.vendor,
+      merchantColor: perm.vendorColor,
+      merchantInitial: perm.vendorInitial,
+      amount: 5.00,
+      amountStr: '$5.00',
+      intent: `Scout redeemed delegated spend — ${perm.vendor}`,
+      status: 'APPROVED',
+      statusMessage: 'Delegated spend executed onchain',
+      timestamp: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+      category: 'Delegated Spend',
+      txHash,
+      isReal: true,
+      onchainVerified: true,
+      isDelegation: true,
+    };
+    setFeed(prev => [spendItem, ...prev]);
+  }, [spendPermissions]);
 
   const declinePending = useCallback((id: string) => {
     setFeed(prev => prev.map(item => 
@@ -338,39 +394,8 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     setStage('INITIAL');
   }, []);
 
-  const recordExecutedSpend = useCallback((permissionId: string, amount: number, txHash: `0x${string}`) => {
-    const permission = spendPermissions.find((p) => p.id === permissionId);
-    if (!permission) return;
-
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes().toString().padStart(2, '0');
-    const suffix = hours >= 12 ? 'PM' : 'AM';
-    const displayHour = ((hours + 11) % 12) + 1;
-
-    const spendItem: FeedItem = {
-      id: `tx-spend-${Date.now()}`,
-      dateGroup: 'TODAY',
-      merchant: permission.vendor,
-      merchantColor: permission.vendorColor,
-      merchantInitial: permission.vendorInitial,
-      amount,
-      amountStr: `$${amount.toFixed(2)}`,
-      intent: `Scout executed a real spend under the approved ${permission.vendor} permission`,
-      status: 'APPROVED',
-      statusMessage: 'Spent under approved permission — verified onchain',
-      timestamp: `${displayHour}:${minutes} ${suffix}`,
-      category: 'Data Services',
-      txHash,
-      isReal: true,
-      onchainVerified: true,
-    };
-
-    setFeed(prev => [spendItem, ...prev]);
-  }, [spendPermissions]);
-
   return (
-    <DemoContext.Provider value={{ feed, rules, spendPermissions, stage, agentAvatarUrl, setAgentAvatarUrl, approvePending, declinePending, toggleRule, resetDemo, recordExecutedSpend }}>
+    <DemoContext.Provider value={{ feed, rules, spendPermissions, stage, agentAvatarUrl, setAgentAvatarUrl, approvePending, recordDelegationSpend, declinePending, toggleRule, resetDemo }}>
       {children}
     </DemoContext.Provider>
   );
