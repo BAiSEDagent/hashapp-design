@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { useRoute, Link } from 'wouter';
-import { X, ExternalLink } from 'lucide-react';
+import { X, ExternalLink, Loader2, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTransactionReceipt, useBlock, useReadContract } from 'wagmi';
 import { useDemo } from '@/context/DemoContext';
-import { USE_METAMASK_DELEGATION } from '@/config/delegation';
+import { USE_METAMASK_DELEGATION, SCOUT_SESSION_ADDRESS } from '@/config/delegation';
+import { executeDelegationSpend } from '@/lib/delegationSpend';
 import {
   SPEND_PERMISSION_MANAGER_ADDRESS,
   SPEND_PERMISSION_MANAGER_ABI,
@@ -14,7 +16,10 @@ import { TruthBadge } from '@/components/TruthBadge';
 
 export default function Receipt() {
   const [, params] = useRoute('/receipt/:id');
-  const { feed, spendPermissions } = useDemo();
+  const { feed, spendPermissions, recordDelegationSpend } = useDemo();
+  const [isSpending, setIsSpending] = useState(false);
+  const [spendError, setSpendError] = useState<string | null>(null);
+  const [spendTxHash, setSpendTxHash] = useState<string | null>(null);
   
   const item = feed.find(f => f.id === params?.id);
 
@@ -32,9 +37,49 @@ export default function Receipt() {
     query: { enabled: !!txReceipt?.blockNumber },
   });
 
-  const linkedPerm = item ? spendPermissions.find(p => p.txHash && p.txHash === item.txHash) : undefined;
+  const linkedPerm = item
+    ? spendPermissions.find(p =>
+        (p.isDelegation && p.permissionsContext && (p.permissionsContext === item.permissionsContext)) ||
+        (p.txHash && p.txHash === item.txHash)
+      )
+    : undefined;
   const permStruct = linkedPerm?.permissionStruct;
   const isDelegation = USE_METAMASK_DELEGATION && (item?.isDelegation || linkedPerm?.isDelegation);
+
+  const delegationContext = item?.permissionsContext || linkedPerm?.permissionsContext;
+  const delegationMgr = item?.delegationManager || linkedPerm?.delegationManager;
+  const canSpend = isDelegation && !!delegationContext && !!delegationMgr && !spendTxHash;
+
+  const handleDelegatedSpend = async () => {
+    if (!delegationContext || !delegationMgr) return;
+    setIsSpending(true);
+    setSpendError(null);
+    try {
+      console.log('[Spend] Triggering delegated spend...', {
+        permissionsContext: delegationContext.slice(0, 20) + '...',
+        delegationManager: delegationMgr,
+        recipient: SCOUT_SESSION_ADDRESS,
+        amountUsdc: 5,
+      });
+      const result = await executeDelegationSpend({
+        permissionsContext: delegationContext,
+        delegationManager: delegationMgr,
+        amountUsdc: 5,
+        recipient: SCOUT_SESSION_ADDRESS,
+      });
+      console.log('[Spend] Success! txHash:', result.txHash);
+      setSpendTxHash(result.txHash);
+      if (linkedPerm) {
+        recordDelegationSpend(linkedPerm.id, result.txHash);
+      }
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Delegated spend failed';
+      console.error('[Spend] Error:', message);
+      setSpendError(message.length > 120 ? message.slice(0, 120) + '…' : message);
+    } finally {
+      setIsSpending(false);
+    }
+  };
 
   const { data: isApprovedLive } = useReadContract({
     address: SPEND_PERMISSION_MANAGER_ADDRESS,
