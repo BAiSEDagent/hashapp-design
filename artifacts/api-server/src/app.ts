@@ -12,6 +12,11 @@ if (process.env.ALLOWED_ORIGINS) {
 if (process.env.REPLIT_DEV_DOMAIN) {
   allowedOriginSet.add(`https://${process.env.REPLIT_DEV_DOMAIN}`);
 }
+if (process.env.REPLIT_DOMAINS) {
+  process.env.REPLIT_DOMAINS.split(',').map(d => d.trim()).filter(Boolean).forEach(d => {
+    allowedOriginSet.add(`https://${d}`);
+  });
+}
 
 app.use(cors({
   origin: allowedOriginSet.size > 0
