@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { ExternalLink } from 'lucide-react';
 
 type BadgeType = 'onchain' | 'demo' | 'pending' | 'delegation' | 'expired';
@@ -45,6 +46,16 @@ const BADGE_CONFIG = {
   },
 } as const;
 
+function formatCountdown(seconds: number): string {
+  if (seconds <= 0) return '';
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (d > 0) return `${d}d ${h}h`;
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
+}
+
 export function TruthBadge({
   type,
   txHash,
@@ -56,10 +67,20 @@ export function TruthBadge({
   expiresAt?: number;
   showCaveat?: boolean;
 }) {
-  const now = Math.floor(Date.now() / 1000);
+  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
+
+  useEffect(() => {
+    if (type !== 'delegation' || !expiresAt) return;
+    const interval = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 60_000);
+    return () => clearInterval(interval);
+  }, [type, expiresAt]);
+
   const isExpired = type === 'delegation' && expiresAt && expiresAt <= now;
   const effectiveType = isExpired ? 'expired' : type;
   const c = BADGE_CONFIG[effectiveType];
+
+  const remaining = effectiveType === 'delegation' && expiresAt ? expiresAt - now : 0;
+  const countdown = remaining > 0 ? formatCountdown(remaining) : '';
 
   const badge = (effectiveType === 'onchain' || effectiveType === 'delegation') && txHash ? (
     <a
@@ -71,12 +92,14 @@ export function TruthBadge({
     >
       <div className={`w-[4px] h-[4px] rounded-full ${c.dot}`} />
       {c.label}
+      {countdown && <span className="normal-case font-normal opacity-70">· {countdown}</span>}
       <ExternalLink size={7} />
     </a>
   ) : (
     <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md ${c.bg} border ${c.border} ${c.text} text-[9px] font-semibold uppercase tracking-[0.06em]`}>
       <div className={`w-[4px] h-[4px] rounded-full ${c.dot}`} />
       {c.label}
+      {countdown && <span className="normal-case font-normal opacity-70">· {countdown}</span>}
     </span>
   );
 

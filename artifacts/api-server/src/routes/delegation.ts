@@ -177,15 +177,15 @@ delegationRouter.post('/delegation/challenge', async (req, res) => {
 
 delegationRouter.post('/delegation/register', async (req, res) => {
   try {
-    const { permissionsContext, delegatorAddress, signature, challengeNonce } = req.body;
+    const { permissionsContext, delegatorAddress, signature, challengeId } = req.body;
 
     if (!permissionsContext || !delegatorAddress) {
       res.status(400).json({ error: 'Missing required fields: permissionsContext, delegatorAddress' });
       return;
     }
 
-    if (!signature || !challengeNonce) {
-      res.status(401).json({ error: 'Missing wallet signature or challenge nonce' });
+    if (!signature || !challengeId) {
+      res.status(401).json({ error: 'Missing wallet signature or challengeId' });
       return;
     }
 
@@ -203,7 +203,7 @@ delegationRouter.post('/delegation/register', async (req, res) => {
       .delete(delegationChallenges)
       .where(
         and(
-          eq(delegationChallenges.nonce, challengeNonce),
+          eq(delegationChallenges.nonce, challengeId),
           eq(delegationChallenges.used, false),
         ),
       )
@@ -230,7 +230,7 @@ delegationRouter.post('/delegation/register', async (req, res) => {
       return;
     }
 
-    const expectedMessage = `hashapp-delegation-register:${challengeNonce}:${permissionsContext.toLowerCase()}:${delegatorAddress.toLowerCase()}:${challengeRow.createdAt}`;
+    const expectedMessage = `hashapp-delegation-register:${challengeId}:${permissionsContext.toLowerCase()}:${delegatorAddress.toLowerCase()}:${challengeRow.createdAt}`;
 
     let recoveredValid = false;
     try {

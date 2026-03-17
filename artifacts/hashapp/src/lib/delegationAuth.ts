@@ -46,7 +46,7 @@ export async function registerDelegation(
       permissionsContext,
       delegatorAddress,
       signature,
-      challengeNonce: nonce,
+      challengeId: nonce,
     }),
   });
 
