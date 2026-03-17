@@ -171,6 +171,7 @@ export default function Receipt() {
                 }
                 txHash={item.txHash}
                 expiresAt={item.delegationExpiry}
+                showCaveat={isDelegation}
               />
             </div>
           )}

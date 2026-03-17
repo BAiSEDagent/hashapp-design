@@ -271,9 +271,9 @@ function SpendPermissionRow({ permission, onSpend }: { permission: SpendPermissi
     query: { enabled: !isDelegation && !!permStruct && !!permission.isReal },
   });
 
-  let badgeType: 'onchain' | 'demo' | 'pending';
+  let badgeType: 'onchain' | 'demo' | 'pending' | 'delegation';
   if (isDelegation && permission.permissionsContext) {
-    badgeType = 'onchain';
+    badgeType = 'delegation';
   } else if (permission.isReal && permission.txHash) {
     const verified = isApprovedOnchain ?? permission.onchainVerified;
     badgeType = verified ? 'onchain' : 'pending';
@@ -314,10 +314,7 @@ function SpendPermissionRow({ permission, onSpend }: { permission: SpendPermissi
             <div className={`w-[5px] h-[5px] rounded-full shrink-0 ${permission.state === 'active' ? 'bg-emerald-400' : 'bg-rose-400'}`} />
           </div>
           <div className="flex items-center gap-1.5 mt-0.5">
-            <TruthBadge type={badgeType} txHash={permission.txHash} />
-            {isDelegation && (
-              <span className="text-[8px] text-orange-400/60 font-medium uppercase tracking-wider">delegation</span>
-            )}
+            <TruthBadge type={badgeType} txHash={permission.txHash} expiresAt={permission.delegationExpiry} showCaveat={isDelegation} />
           </div>
         </div>
         <div className="text-right shrink-0">
