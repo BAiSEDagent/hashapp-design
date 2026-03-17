@@ -183,8 +183,6 @@ delegationRouter.post('/delegation/register', async (req, res) => {
       return;
     }
 
-    usedChallenges.set(message, nowSec);
-
     let recoveredValid = false;
     try {
       recoveredValid = await verifyMessage({
@@ -200,6 +198,8 @@ delegationRouter.post('/delegation/register', async (req, res) => {
       res.status(401).json({ error: 'Signature verification failed' });
       return;
     }
+
+    usedChallenges.set(message, nowSec);
 
     const embeddedDelegator = extractDelegatorFromContext(permissionsContext as `0x${string}`);
     if (embeddedDelegator) {
