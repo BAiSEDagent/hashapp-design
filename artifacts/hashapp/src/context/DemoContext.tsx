@@ -36,6 +36,7 @@ export interface FeedItem {
   delegationManager?: `0x${string}`;
   isDelegation?: boolean;
   spendToken?: string;
+  delegationExpiry?: number;
   type?: FeedItemType;
   swapDetails?: SwapDetails;
 }
@@ -67,6 +68,7 @@ export interface SpendPermission {
   delegationManager?: `0x${string}`;
   isDelegation?: boolean;
   spendToken?: string;
+  delegationExpiry?: number;
 }
 
 export interface Rule {
@@ -92,6 +94,7 @@ interface DemoState {
       permissionsContext: `0x${string}`;
       delegationManager: `0x${string}`;
       spendToken?: string;
+      delegationExpiry?: number;
     },
   ) => void;
   recordDelegationSpend: (
@@ -242,7 +245,7 @@ function loadPersistedState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed.version === 5) return parsed;
+      if (parsed.version === 6) return parsed;
     }
   } catch {}
   return null;
@@ -251,7 +254,7 @@ function loadPersistedState() {
 function persistState(feed: FeedItem[], rules: Rule[], spendPermissions: SpendPermission[], stage: DemoState['stage']) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      version: 5,
+      version: 6,
       feed,
       rules,
       spendPermissions,
@@ -347,6 +350,7 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
       permissionsContext: `0x${string}`;
       delegationManager: `0x${string}`;
       spendToken?: string;
+      delegationExpiry?: number;
     },
   ) => {
     const isDelegation = !!delegationFields;
@@ -362,11 +366,12 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
                 : 'Approved — spend permission granted (demo)',
             txHash: realTxHash,
             isReal: !!realTxHash || isDelegation,
-            onchainVerified: isDelegation ? true : onchainVerified,
+            onchainVerified: isDelegation ? undefined : onchainVerified,
             permissionsContext: delegationFields?.permissionsContext,
             delegationManager: delegationFields?.delegationManager,
             isDelegation,
             spendToken: delegationFields?.spendToken,
+            delegationExpiry: delegationFields?.delegationExpiry,
           } 
         : item
     ));
@@ -381,12 +386,13 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
       ruledBy: 'r4',
       txHash: realTxHash,
       isReal: !!realTxHash || isDelegation,
-      onchainVerified: isDelegation ? true : onchainVerified,
+      onchainVerified: isDelegation ? undefined : onchainVerified,
       permissionStruct,
       permissionsContext: delegationFields?.permissionsContext,
       delegationManager: delegationFields?.delegationManager,
       isDelegation,
       spendToken: delegationFields?.spendToken,
+      delegationExpiry: delegationFields?.delegationExpiry,
     }]);
     if (stage === 'PENDING_ADDED') setStage('APPROVED');
   }, [stage]);
@@ -413,8 +419,8 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
       category: 'Delegated Spend',
       txHash,
       isReal: true,
-      onchainVerified: true,
       isDelegation: true,
+      delegationExpiry: perm.delegationExpiry,
     };
     setFeed(prev => [spendItem, ...prev]);
   }, [spendPermissions]);

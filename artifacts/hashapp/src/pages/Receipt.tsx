@@ -61,13 +61,13 @@ export default function Receipt() {
           permissionsContext: delegationContext.slice(0, 20) + '...',
           delegationManager: delegationMgr,
           recipient: SCOUT_SESSION_ADDRESS,
-          amountUsdc: 5,
+          amountUsdc: '5',
         });
       }
       const result = await executeDelegationSpend({
         permissionsContext: delegationContext,
         delegationManager: delegationMgr,
-        amountUsdc: 5,
+        amountUsdc: '5',
         recipient: SCOUT_SESSION_ADDRESS,
         spendToken: delegationSpendToken,
       });
@@ -112,12 +112,7 @@ export default function Receipt() {
   const hasRealProof = item.isReal && item.txHash;
   const isApprovedOrAuto = item.status === 'APPROVED' || item.status === 'AUTO_APPROVED';
 
-  let onchainVerified: boolean | undefined;
-  if (isDelegation) {
-    onchainVerified = true;
-  } else {
-    onchainVerified = isApprovedLive ?? item.onchainVerified;
-  }
+  const onchainVerified = isDelegation ? undefined : (isApprovedLive ?? item.onchainVerified);
 
   const confirmedAt = block?.timestamp
     ? new Date(Number(block.timestamp) * 1000).toLocaleString()
@@ -169,12 +164,13 @@ export default function Receipt() {
               <TruthBadge
                 type={
                   isDelegation
-                    ? 'onchain'
+                    ? 'delegation'
                     : hasRealProof
                       ? (onchainVerified === true ? 'onchain' : 'pending')
                       : 'demo'
                 }
                 txHash={item.txHash}
+                expiresAt={item.delegationExpiry}
               />
             </div>
           )}

@@ -62,15 +62,17 @@ Hashapp — consumer-grade dark premium spending app for AI agents. Demo-only fr
 - **Wallet connection**: wagmi + viem configured for Base Sepolia (injected + Coinbase Wallet connectors). Shows real wallet address when connected, honest "No Wallet Connected" when not. Connect buttons rendered from wagmi connectors list.
 - **Demo Flow**: Load → 3s pause → pending spend permission slides in → user approves → navigate to Rules → toggle off "Block spend permissions (recurring)" → return to Activity → 2s → new blocked entry appears
 - **Honesty rules**: No fake tx hashes in hardcoded feed. Receipt shows "Demo transaction · no onchain proof" for demo items. Basescan links only appear when `isReal && txHash`. Rules footer: "Rules managed by Hashapp" (not "enforced onchain"). Agent footer: "ERC-8004 · Base Sepolia" (no fake token ID). Dead CTAs removed (no "Increase limit", "Adjust budget", "Pause Scout").
-- **Persistence**: localStorage (key: `hashapp_demo_state`, version 5) persists feed, rules, spendPermissions, and stage across refreshes.
+- **Persistence**: localStorage (key: `hashapp_demo_state`, version 6) persists feed, rules, spendPermissions, and stage across refreshes. Version bumped from 5→6 when `delegationExpiry` field was added.
 - **Key Design**: Intent-aware language ("Scout bought research credits..."), plain-English rules, honest onchain references only when backed by real proof, spend permission terminology for recurring charges
 - **MetaMask Delegation Pivot**: Feature-gated behind `VITE_USE_METAMASK_DELEGATION=true`. Replaces Coinbase SpendPermissionManager with MetaMask Smart Accounts Kit + ERC-7715/ERC-7710 Delegation Framework. Key files:
   - `src/config/delegation.ts` — feature flag, chain, USDC address, DelegationManager address, session account address
   - `src/lib/metamaskPermissions.ts` — ERC-7715 `requestExecutionPermissions` wrapper
   - `src/lib/sessionAccount.ts` — Scout session account from `VITE_SCOUT_SESSION_ADDRESS` env var
-  - `src/lib/delegationSpend.ts` — POSTs to `/api/delegation/spend` for server-side ERC-7710 redemption
+  - `src/lib/delegationSpend.ts` — POSTs to `/api/delegation/spend` for server-side ERC-7710 redemption (`amountUsdc` is string, regex-validated server-side)
+  - `src/lib/delegationAuth.ts` — Server-issued challenge flow: fetches nonce from `/api/delegation/challenge`, signs challenge message, registers via `/api/delegation/register`
   - `src/config/wallet.ts` — feature-gated connectors (delegation: injected only; fallback: coinbaseWallet)
   - All pages (Activity, Money, Agent, Receipt) are feature-gated for delegation path
+- **TruthBadge types**: `onchain` (green, verified on-chain), `delegation` (orange, delegation-granted), `expired` (rose, delegation expired), `demo` (grey, demo data), `pending` (amber, awaiting confirmation). Delegation badges auto-downgrade to `expired` when `expiresAt <= now`.
 - **Dependencies**: react, framer-motion, wouter, lucide-react, tailwindcss, clsx, tailwind-merge, wagmi, viem, @metamask/smart-accounts-kit@0.4.0-beta.1
 
 ### `artifacts/api-server` (`@workspace/api-server`)
@@ -80,7 +82,10 @@ Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` 
 - Entry: `src/index.ts` — reads `PORT`, starts Express
 - App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
 - Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
-- Delegation route: `src/routes/delegation.ts` — `POST /api/delegation/spend` executes ERC-7710 delegated USDC transfers server-side using `SCOUT_PRIVATE_KEY`. Enforces token allowlist (USDC only), delegation manager address check, amount bounds ($0–$1000), and address format validation.
+- Delegation routes: `src/routes/delegation.ts` — Three endpoints:
+  - `POST /api/delegation/challenge` — Issues server-generated nonce, stored in `delegation_challenges` DB table (5-min TTL)
+  - `POST /api/delegation/register` — Validates challenge nonce + wallet signature, stores context→owner mapping in DB, returns spend token (HMAC-signed, uses `DELEGATION_AUTH_SECRET` env var with fallback to derived key)
+  - `POST /api/delegation/spend` — Executes ERC-7710 delegated USDC transfers server-side using `SCOUT_PRIVATE_KEY`. Enforces token allowlist (USDC only), delegation manager address check, string `amountUsdc` with regex validation, and address format validation. Rate-limited and idempotent via DB tables.
 - Swap routes: `src/routes/swap.ts` — Uniswap Trading API integration:
   - `POST /api/swap/quote` — Gets a swap quote (check_approval + quote). Server-side validates token allowlist, slippage cap (1%), USD per-swap cap ($50 via estimateUsdFromTokenAmount).
   - `POST /api/swap/execute` — Executes a swap. Mode: `scout` (backend wallet signs, requires SCOUT_API_TOKEN) or `user` (returns unsigned tx). Validates token allowlist + slippage + server-side USD cap.
@@ -88,7 +93,7 @@ Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` 
   - `GET /api/swap/tokens` — Returns approved token list.
   - Auth: Scout wallet endpoints use default-deny (returns 401 when SCOUT_API_TOKEN is unset or missing).
 - Uniswap service: `src/lib/uniswap.ts` — Wraps the Uniswap Trading API 3-step flow (check_approval → quote → swap). Handles CLASSIC and UniswapX response shapes, strips null permitData, sends chain IDs as strings. executeSwapWithScoutWallet handles Permit2 approval before swap. estimateUsdFromTokenAmount derives USD value server-side from token address + raw amount.
-- Env vars needed: `UNISWAP_API_KEY` (from Uniswap Developer Platform), `SCOUT_PRIVATE_KEY` (Scout's backend wallet), `SCOUT_API_TOKEN` (auth for Scout endpoints)
+- Env vars needed: `UNISWAP_API_KEY` (from Uniswap Developer Platform), `SCOUT_PRIVATE_KEY` (Scout's backend wallet), `SCOUT_API_TOKEN` (auth for Scout endpoints), `DELEGATION_AUTH_SECRET` (HMAC secret for spend tokens; falls back to derived-from-SCOUT_PRIVATE_KEY with warning)
 - Depends on: `@workspace/db`, `@workspace/api-zod`
 - `pnpm --filter @workspace/api-server run dev` — run the dev server
 - `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
@@ -100,7 +105,8 @@ Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client insta
 
 - `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
 - `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
+- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas
+- `src/schema/delegation.ts` — Four delegation-specific tables: `delegation_challenges` (server-issued nonces), `delegation_context_owners` (permissionsContext→owner mapping), `delegation_rate_limits` (per-context spend tracking), `delegation_idempotency` (idempotency keys)
 - `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
 - Exports: `.` (pool, db, schema), `./schema` (schema only)
 

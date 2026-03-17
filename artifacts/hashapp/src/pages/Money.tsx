@@ -291,7 +291,7 @@ function SpendPermissionRow({ permission, onSpend }: { permission: SpendPermissi
       const result = await executeDelegationSpend({
         permissionsContext: permission.permissionsContext,
         delegationManager: permission.delegationManager,
-        amountUsdc: 5,
+        amountUsdc: '5',
         recipient: '0x000000000000000000000000000000000000dEaD' as `0x${string}`,
         spendToken: permission.spendToken,
       });

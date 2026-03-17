@@ -18,6 +18,7 @@ export interface GrantedDelegation {
   permissionsContext: `0x${string}`;
   delegationManager: `0x${string}`;
   grantedPermissions: unknown;
+  expiry: number;
 }
 
 export async function requestDelegatedPermission(
@@ -33,12 +34,13 @@ export async function requestDelegatedPermission(
   }).extend(erc7715ProviderActions());
 
   const now = Math.floor(Date.now() / 1000);
+  const expiry = now + PERMISSION_EXPIRY_SECONDS;
   const periodAmount = parseUnits(amountUsdc.toString(), 6);
 
   const permissionRequest = [
     {
       chainId: DELEGATION_CHAIN.id,
-      expiry: now + PERMISSION_EXPIRY_SECONDS,
+      expiry,
       to: SCOUT_SESSION_ADDRESS,
       permission: {
         type: 'erc20-token-periodic' as const,
@@ -79,6 +81,7 @@ export async function requestDelegatedPermission(
       permissionsContext,
       delegationManager,
       grantedPermissions,
+      expiry,
     };
   } catch (err: unknown) {
     const error = err as Record<string, unknown>;

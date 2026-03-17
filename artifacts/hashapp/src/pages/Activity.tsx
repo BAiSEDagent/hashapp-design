@@ -123,6 +123,7 @@ function FeedCard({
       permissionsContext: `0x${string}`;
       delegationManager: `0x${string}`;
       spendToken?: string;
+      delegationExpiry?: number;
     },
   ) => void;
   onDecline: () => void;
@@ -136,10 +137,10 @@ function FeedCard({
     return <PendingCard item={item} onApprove={onApprove} onDecline={onDecline} />;
   }
 
-  let badgeType: 'onchain' | 'demo' | 'pending' | null = null;
+  let badgeType: 'onchain' | 'demo' | 'pending' | 'delegation' | null = null;
   if (isApprovedOrAuto) {
     if (item.isDelegation) {
-      badgeType = 'onchain';
+      badgeType = 'delegation';
     } else if (item.isReal && item.txHash) {
       badgeType = item.onchainVerified === true ? 'onchain' : 'pending';
     } else {
@@ -185,7 +186,7 @@ function FeedCard({
             <p className={`text-[11px] truncate leading-relaxed ${isBlocked ? 'text-muted-foreground/35' : 'text-muted-foreground/50'}`}>{item.intent}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            {badgeType && <TruthBadge type={badgeType} txHash={item.txHash} />}
+            {badgeType && <TruthBadge type={badgeType} txHash={item.txHash} expiresAt={item.delegationExpiry} />}
             <StatusDot status={item.status} />
           </div>
         </div>
@@ -218,6 +219,7 @@ function PendingCard({
       permissionsContext: `0x${string}`;
       delegationManager: `0x${string}`;
       spendToken?: string;
+      delegationExpiry?: number;
     },
   ) => void;
   onDecline: () => void;
@@ -246,10 +248,11 @@ function PendingCard({
 
       const authResult = await registerDelegation(result.permissionsContext, address, signMessage);
 
-      onApprove(item.id, undefined, undefined, true, {
+      onApprove(item.id, undefined, undefined, undefined, {
         permissionsContext: result.permissionsContext,
         delegationManager: result.delegationManager,
         spendToken: authResult.spendToken,
+        delegationExpiry: result.expiry,
       });
     } catch (e: unknown) {
       const message = e instanceof Error ? e.message : 'Delegation request failed';

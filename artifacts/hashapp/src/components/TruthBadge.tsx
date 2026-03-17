@@ -1,6 +1,6 @@
 import { ExternalLink } from 'lucide-react';
 
-type BadgeType = 'onchain' | 'demo' | 'pending';
+type BadgeType = 'onchain' | 'demo' | 'pending' | 'delegation' | 'expired';
 
 const BADGE_CONFIG = {
   onchain: {
@@ -9,6 +9,20 @@ const BADGE_CONFIG = {
     text: 'text-emerald-400/80',
     dot: 'bg-emerald-400',
     label: 'Onchain',
+  },
+  delegation: {
+    bg: 'bg-orange-500/10',
+    border: 'border-orange-500/15',
+    text: 'text-orange-400/80',
+    dot: 'bg-orange-400',
+    label: 'Delegation',
+  },
+  expired: {
+    bg: 'bg-zinc-500/8',
+    border: 'border-rose-500/15',
+    text: 'text-rose-400/60',
+    dot: 'bg-rose-400/50',
+    label: 'Expired',
   },
   demo: {
     bg: 'bg-zinc-500/8',
@@ -29,13 +43,18 @@ const BADGE_CONFIG = {
 export function TruthBadge({
   type,
   txHash,
+  expiresAt,
 }: {
   type: BadgeType;
   txHash?: string;
+  expiresAt?: number;
 }) {
-  const c = BADGE_CONFIG[type];
+  const now = Math.floor(Date.now() / 1000);
+  const isExpired = type === 'delegation' && expiresAt && expiresAt <= now;
+  const effectiveType = isExpired ? 'expired' : type;
+  const c = BADGE_CONFIG[effectiveType];
 
-  if (type === 'onchain' && txHash) {
+  if ((effectiveType === 'onchain' || effectiveType === 'delegation') && txHash) {
     return (
       <a
         href={`https://sepolia.basescan.org/tx/${txHash}`}
