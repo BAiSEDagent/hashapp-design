@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShieldCheck, Loader2, ExternalLink, ArrowDownUp } from 'lucide-react';
+import { ShieldCheck, Loader2, ExternalLink, ArrowDownUp, Eye } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { useAccount, useWriteContract, useConnect, useWalletClient } from 'wagmi';
 import { waitForTransactionReceipt, readContract } from 'wagmi/actions';
@@ -186,6 +186,12 @@ function FeedCard({
             <p className={`text-[11px] truncate leading-relaxed ${isBlocked ? 'text-muted-foreground/35' : 'text-muted-foreground/50'}`}>{item.intent}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {item.privateReasoningUsed && (
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-violet-500/8 border border-violet-500/10 text-[8px] font-medium text-violet-400/70 uppercase tracking-[0.06em]">
+                <Eye size={7} className="opacity-70" />
+                Venice
+              </span>
+            )}
             {badgeType && <TruthBadge type={badgeType} txHash={item.txHash} expiresAt={item.delegationExpiry} />}
             <StatusDot status={item.status} />
           </div>

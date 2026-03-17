@@ -62,7 +62,7 @@ Hashapp — consumer-grade dark premium spending app for AI agents. Demo-only fr
 - **Wallet connection**: wagmi + viem configured for Base Sepolia (injected + Coinbase Wallet connectors). Shows real wallet address when connected, honest "No Wallet Connected" when not. Connect buttons rendered from wagmi connectors list.
 - **Demo Flow**: Load → 3s pause → pending spend permission slides in → user approves → navigate to Rules → toggle off "Block spend permissions (recurring)" → return to Activity → 2s → new blocked entry appears
 - **Honesty rules**: No fake tx hashes in hardcoded feed. Receipt shows "Demo transaction · no onchain proof" for demo items. Basescan links only appear when `isReal && txHash`. Rules footer: "Rules managed by Hashapp" (not "enforced onchain"). Agent footer: "ERC-8004 · Base Sepolia" (no fake token ID). Dead CTAs removed (no "Increase limit", "Adjust budget", "Pause Scout").
-- **Persistence**: localStorage (key: `hashapp_demo_state`, version 6) persists feed, rules, spendPermissions, and stage across refreshes. Version bumped from 5→6 when `delegationExpiry` field was added.
+- **Persistence**: localStorage (key: `hashapp_demo_state`, version 7) persists feed, rules, spendPermissions, and stage across refreshes. Version bumped from 6→7 when Venice private reasoning fields were added.
 - **Key Design**: Intent-aware language ("Scout bought research credits..."), plain-English rules, honest onchain references only when backed by real proof, spend permission terminology for recurring charges
 - **MetaMask Delegation Pivot**: Feature-gated behind `VITE_USE_METAMASK_DELEGATION=true`. Replaces Coinbase SpendPermissionManager with MetaMask Smart Accounts Kit + ERC-7715/ERC-7710 Delegation Framework. Key files:
   - `src/config/delegation.ts` — feature flag, chain, USDC address, DelegationManager address, session account address
@@ -73,6 +73,7 @@ Hashapp — consumer-grade dark premium spending app for AI agents. Demo-only fr
   - `src/config/wallet.ts` — feature-gated connectors (delegation: injected only; fallback: coinbaseWallet)
   - All pages (Activity, Money, Agent, Receipt) are feature-gated for delegation path
 - **TruthBadge types**: `onchain` (green, verified on-chain), `delegation` (orange, delegation-granted), `expired` (rose, delegation expired), `demo` (grey, demo data), `pending` (amber, awaiting confirmation). Delegation badges auto-downgrade to `expired` when `expiresAt <= now`.
+- **Venice private reasoning**: Integration layer showing Venice as Scout's private analysis capability. FeedItem fields: `privateReasoningUsed`, `reasoningProvider`, `reasonSummary`, `disclosureSummary`. Surfaces in: Agent page "Reasoning & Privacy" card, Activity feed violet "Venice" badge, Receipt "Reasoning Provenance" disclosure section. Venice is a capability, not a product takeover — no dedicated tab or mode toggle.
 - **Dependencies**: react, framer-motion, wouter, lucide-react, tailwindcss, clsx, tailwind-merge, wagmi, viem, @metamask/smart-accounts-kit@0.4.0-beta.1
 
 ### `artifacts/api-server` (`@workspace/api-server`)
@@ -93,7 +94,8 @@ Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` 
   - `GET /api/swap/tokens` — Returns approved token list.
   - Auth: Scout wallet endpoints use default-deny (returns 401 when SCOUT_API_TOKEN is unset or missing).
 - Uniswap service: `src/lib/uniswap.ts` — Wraps the Uniswap Trading API 3-step flow (check_approval → quote → swap). Handles CLASSIC and UniswapX response shapes, strips null permitData, sends chain IDs as strings. executeSwapWithScoutWallet handles Permit2 approval before swap. estimateUsdFromTokenAmount derives USD value server-side from token address + raw amount.
-- Env vars needed: `UNISWAP_API_KEY` (from Uniswap Developer Platform), `SCOUT_PRIVATE_KEY` (Scout's backend wallet), `SCOUT_API_TOKEN` (auth for Scout endpoints), `DELEGATION_AUTH_SECRET` (HMAC secret for spend tokens; required in production — server refuses to start without it; in dev, falls back to derived-from-SCOUT_PRIVATE_KEY with console warning)
+- Venice routes: `src/routes/venice.ts` — `POST /api/venice/analyze` — Accepts `prompt` (string, max 2000 chars), returns reasoning summary via Venice API (OpenAI-compatible). Default-deny: returns 503 when `VENICE_API_KEY` is not set. Service layer: `src/lib/venice.ts` — OpenAI SDK client targeting `api.venice.ai`, uses `llama-3.3-70b` model.
+- Env vars needed: `UNISWAP_API_KEY` (from Uniswap Developer Platform), `SCOUT_PRIVATE_KEY` (Scout's backend wallet), `SCOUT_API_TOKEN` (auth for Scout endpoints), `DELEGATION_AUTH_SECRET` (HMAC secret for spend tokens; required in production — server refuses to start without it; in dev, falls back to derived-from-SCOUT_PRIVATE_KEY with console warning), `VENICE_API_KEY` (optional — Venice private reasoning; route returns 503 when unset)
 - Depends on: `@workspace/db`, `@workspace/api-zod`
 - `pnpm --filter @workspace/api-server run dev` — run the dev server
 - `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)

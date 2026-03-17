@@ -39,6 +39,10 @@ export interface FeedItem {
   delegationExpiry?: number;
   type?: FeedItemType;
   swapDetails?: SwapDetails;
+  privateReasoningUsed?: boolean;
+  reasoningProvider?: string;
+  reasonSummary?: string;
+  disclosureSummary?: string;
 }
 
 export interface SpendPermission {
@@ -181,11 +185,15 @@ const INITIAL_FEED: FeedItem[] = [
     merchantInitial: 'P',
     amount: 35.00,
     amountStr: '$35.00',
-    intent: "Scout purchased market intelligence data",
+    intent: "Scout privately reviewed vendor pricing before purchasing market data",
     status: 'AUTO_APPROVED',
-    statusMessage: 'Auto-approved',
+    statusMessage: 'Auto-approved — private review cleared',
     timestamp: '1:10 PM',
     category: 'Data Services',
+    privateReasoningUsed: true,
+    reasoningProvider: 'Venice',
+    reasonSummary: 'Compared PitchBook pricing against 3 alternatives. Current rate is 18% below market average for comparable coverage. No vendor lock-in risk identified.',
+    disclosureSummary: 'Vendor, amount, and settlement proof are public. Competitive pricing analysis and vendor comparison inputs remained private.',
   },
   {
     id: 'tx-6',
@@ -195,11 +203,15 @@ const INITIAL_FEED: FeedItem[] = [
     merchantInitial: 'S',
     amount: 29.00,
     amountStr: '$29.00',
-    intent: "Scout bought industry report access",
+    intent: "Scout privately assessed report relevance before purchasing access",
     status: 'APPROVED',
-    statusMessage: 'Approved',
+    statusMessage: 'Approved — private analysis informed decision',
     timestamp: '10:05 AM',
     category: 'Research Reports',
+    privateReasoningUsed: true,
+    reasoningProvider: 'Venice',
+    reasonSummary: 'Evaluated Statista industry report scope against current research objectives. Report covers 4 of 5 target sectors with data freshness under 30 days.',
+    disclosureSummary: 'Vendor, amount, and category are public. Research objectives and sector targeting criteria remained private.',
   }
 ];
 
@@ -245,7 +257,7 @@ function loadPersistedState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed.version === 6) return parsed;
+      if (parsed.version === 7) return parsed;
     }
   } catch {}
   return null;
@@ -254,7 +266,7 @@ function loadPersistedState() {
 function persistState(feed: FeedItem[], rules: Rule[], spendPermissions: SpendPermission[], stage: DemoState['stage']) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      version: 6,
+      version: 7,
       feed,
       rules,
       spendPermissions,

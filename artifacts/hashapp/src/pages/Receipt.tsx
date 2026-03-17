@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useRoute, Link } from 'wouter';
-import { X, ExternalLink, Loader2, Zap } from 'lucide-react';
+import { X, ExternalLink, Loader2, Zap, Eye } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTransactionReceipt, useBlock, useReadContract } from 'wagmi';
 import { useDemo } from '@/context/DemoContext';
@@ -234,6 +234,28 @@ export default function Receipt() {
               </>
             )}
           </div>
+
+          {item.privateReasoningUsed && (
+            <div className="w-full bg-card rounded-2xl p-5 border border-violet-500/15 mt-4 space-y-0">
+              <div className="flex items-center gap-2 mb-4">
+                <Eye size={12} className="text-violet-400/60" />
+                <span className="text-[10px] font-semibold text-violet-400/60 uppercase tracking-[0.15em]">Reasoning Provenance</span>
+              </div>
+              <DetailRow label="Provider" value={`Private analysis via ${item.reasoningProvider || 'Venice'}`} />
+              {item.reasonSummary && (
+                <div className="flex flex-col gap-1.5 py-4 border-t border-white/[0.05]">
+                  <span className="text-[11px] text-muted-foreground/40 font-medium">Reason summary</span>
+                  <span className="text-[12px] text-foreground/80 font-medium leading-relaxed">{item.reasonSummary}</span>
+                </div>
+              )}
+              {item.disclosureSummary && (
+                <div className="flex flex-col gap-1.5 py-4 border-t border-white/[0.05]">
+                  <span className="text-[11px] text-muted-foreground/40 font-medium">Disclosure boundary</span>
+                  <span className="text-[12px] text-foreground/80 font-medium leading-relaxed">{item.disclosureSummary}</span>
+                </div>
+              )}
+            </div>
+          )}
 
           {canSpend && (
             <div className="w-full mt-6 space-y-3">

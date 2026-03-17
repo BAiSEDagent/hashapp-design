@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { Shield, ArrowRight, CheckCircle2, Zap, RefreshCw, ArrowLeftRight } from 'lucide-react';
+import React, { useState, useCallback, useMemo } from 'react';
+import { Shield, ArrowRight, CheckCircle2, Zap, RefreshCw, ArrowLeftRight, Eye } from 'lucide-react';
 import { useAccount, useReadContract } from 'wagmi';
 import { useDemo } from '@/context/DemoContext';
 import { useLocation } from 'wouter';
@@ -149,6 +149,8 @@ export default function Agent() {
           </div>
         </div>
 
+        <ReasoningPrivacyCard feed={feed} />
+
         {activePermissions.length > 0 && (
           <div className="bg-card rounded-2xl p-5 border border-border/30">
             <div className="flex items-center gap-2 mb-4">
@@ -263,6 +265,37 @@ function AgentPermissionRow({ perm }: { perm: import('@/context/DemoContext').Sp
         <span className="text-[13px] font-semibold tabular-nums">${perm.amount}{cadenceLabel[perm.cadence]}</span>
         <div className={`w-[5px] h-[5px] rounded-full ${perm.state === 'active' ? 'bg-emerald-400' : 'bg-rose-400'}`} />
       </div>
+    </div>
+  );
+}
+
+function ReasoningPrivacyCard({ feed }: { feed: import('@/context/DemoContext').FeedItem[] }) {
+  const lastAnalysis = useMemo(() => {
+    const veniceItem = feed.find(i => i.privateReasoningUsed);
+    if (!veniceItem) return null;
+    if (veniceItem.dateGroup === 'TODAY') return 'Today';
+    if (veniceItem.dateGroup === 'YESTERDAY') return 'Yesterday';
+    return veniceItem.dateGroup;
+  }, [feed]);
+
+  return (
+    <div className="bg-card rounded-2xl p-5 border border-border/30">
+      <div className="flex items-center gap-2 mb-4">
+        <Eye size={14} className="text-violet-400/60" />
+        <span className="text-[12px] font-semibold text-muted-foreground/50 uppercase tracking-wider">Reasoning & Privacy</span>
+      </div>
+      <div className="space-y-3">
+        <StateRow label="Private review" value="On" valueColor="text-emerald-400" />
+        <StateRow label="Provider" value="Venice" />
+        <StateRow label="Inputs allowed" value="Text" />
+        <StateRow label="Disclosure policy" value="Summary only" />
+        {lastAnalysis && (
+          <StateRow label="Last private analysis" value={lastAnalysis} />
+        )}
+      </div>
+      <p className="text-[10px] text-muted-foreground/30 mt-4 leading-relaxed">
+        Private reasoning can inform actions without exposing raw inputs publicly.
+      </p>
     </div>
   );
 }
