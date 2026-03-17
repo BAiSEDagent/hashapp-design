@@ -1,0 +1,121 @@
+My recommendation
+Make the toggle real
+It should control:
+privateReasoningEnabled for the linked agent
+persisted in state
+reflected in UI copy
+
+At minimum:
+On → Venice/private review available
+Off → Venice/private review disabled, provenance hidden for future actions
+
+Do not make the whole card disappear
+That gets jumpy and dumb.
+Better:
+keep the card visible
+use the switch for state
+use an accordion/disclosure section for detail
+
+Best interaction model
+Card header
+title: Reasoning & Privacy
+real On/Off switch
+short status text
+
+Expandable body
+Collapsed by default if you want cleaner UI.
+Expanded state shows:
+provider: Venice
+disclosure policy
+input types
+last analysis
+short explanation
+
+That is better than a hard show/hide.
+
+Why
+Because the product needs to communicate:
+privacy posture
+not just hide settings when off
+
+A dead switch is bad.
+A disappearing card is also bad.
+A live switch + accordion is the right middle ground.
+
+Suggested behavior
+ON
+switch active
+body can expand
+status says:
+Private review enabled
+provenance can appear on future actions
+
+OFF
+switch inactive
+body still expandable
+status says:
+Private review disabled
+explanatory copy:
+“Actions will not use Venice private reasoning.”
+
+Prompt
+Use this:
+
+---
+Follow-up Venice UX task.
+
+Goal
+Make the Reasoning & Privacy card actually functional and cleaner.
+
+Build
+Real toggle
+The On/Off switch must control a real state, e.g.:
+privateReasoningEnabled
+
+Requirements:
+toggle updates state
+state persists in the current app model
+UI text changes based on state
+future Venice-backed actions should be able to reference this state
+
+Accordion/disclosure body
+Make the card expandable/collapsible.
+Do not hide the whole card when off.
+
+Recommended structure:
+header always visible
+switch always visible
+body expands to show:
+provider
+disclosure policy
+input types
+last analysis
+short explanation
+
+Copy states
+#### ON
+“Private review enabled”
+Venice reasoning may inform actions while keeping raw inputs private
+#### OFF
+“Private review disabled”
+Actions will not use Venice private reasoning
+
+Rules
+keep Venice as an agent capability, not a global mode
+do not add a separate Venice tab
+do not turn this into a full settings panel
+keep the page feeling like Hashapp
+
+Deliverable
+Return exactly:
+files changed
+new state field(s)
+whether toggle is persisted
+screenshots:
+collapsed
+expanded
+off state
+on state
+commit hash
+branch
+pushed or not
