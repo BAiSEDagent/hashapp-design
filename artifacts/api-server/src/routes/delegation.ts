@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { createHmac, timingSafeEqual } from 'crypto';
-import { createWalletClient, http, encodeFunctionData, erc20Abi, parseUnits, isAddress, verifyMessage } from 'viem';
+import { createWalletClient, http, encodeFunctionData, erc20Abi, parseUnits, isAddress, verifyMessage, decodeAbiParameters, getAddress } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { baseSepolia } from 'viem/chains';
 import { erc7710WalletActions } from '@metamask/smart-accounts-kit/actions';
@@ -52,6 +52,37 @@ function pruneExpiredEntries() {
 }
 
 setInterval(pruneExpiredEntries, 60_000);
+
+const DELEGATION_TUPLE_TYPE = {
+  type: 'tuple[]' as const,
+  components: [
+    { name: 'delegate', type: 'address' as const },
+    { name: 'delegator', type: 'address' as const },
+    { name: 'authority', type: 'bytes32' as const },
+    { name: 'caveats', type: 'tuple[]' as const, components: [
+      { name: 'enforcer', type: 'address' as const },
+      { name: 'terms', type: 'bytes' as const },
+      { name: 'args', type: 'bytes' as const },
+    ]},
+    { name: 'salt', type: 'uint256' as const },
+    { name: 'signature', type: 'bytes' as const },
+  ],
+};
+
+function extractDelegatorFromContext(permissionsContext: `0x${string}`): string | null {
+  try {
+    const [delegations] = decodeAbiParameters(
+      [DELEGATION_TUPLE_TYPE],
+      permissionsContext,
+    );
+    if (!delegations || delegations.length === 0) return null;
+    const firstDelegation = delegations[0] as { delegator: string };
+    if (!firstDelegation.delegator || !isAddress(firstDelegation.delegator)) return null;
+    return getAddress(firstDelegation.delegator).toLowerCase();
+  } catch {
+    return null;
+  }
+}
 
 function getHmacSecret(): string {
   const raw = process.env.SCOUT_PRIVATE_KEY?.trim();
@@ -168,6 +199,14 @@ delegationRouter.post('/delegation/register', async (req, res) => {
     if (!recoveredValid) {
       res.status(401).json({ error: 'Signature verification failed' });
       return;
+    }
+
+    const embeddedDelegator = extractDelegatorFromContext(permissionsContext as `0x${string}`);
+    if (embeddedDelegator) {
+      if (embeddedDelegator !== delegatorAddress.toLowerCase()) {
+        res.status(403).json({ error: 'Signer does not match delegation owner' });
+        return;
+      }
     }
 
     const ctxKey = permissionsContext.toLowerCase();
