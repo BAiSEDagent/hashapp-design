@@ -102,6 +102,7 @@ function createSpendToken(permissionsContext: string, delegatorAddress: string, 
 }
 
 function validateSpendToken(token: string, permissionsContext: string): { valid: boolean; error?: string; delegatorAddress?: string } {
+  const secret = getHmacSecret();
   try {
     const decoded = JSON.parse(Buffer.from(token, 'base64url').toString('utf-8'));
     const { ctx, addr, iat, sig } = decoded;
@@ -119,7 +120,6 @@ function validateSpendToken(token: string, permissionsContext: string): { valid:
       return { valid: false, error: 'Token does not match permissionsContext' };
     }
 
-    const secret = getHmacSecret();
     const payload = `${ctx}:${addr}:${iat}`;
     const expectedSig = createHmac('sha256', secret).update(payload).digest('hex');
 
