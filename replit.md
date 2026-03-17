@@ -93,7 +93,7 @@ Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` 
   - `GET /api/swap/tokens` — Returns approved token list.
   - Auth: Scout wallet endpoints use default-deny (returns 401 when SCOUT_API_TOKEN is unset or missing).
 - Uniswap service: `src/lib/uniswap.ts` — Wraps the Uniswap Trading API 3-step flow (check_approval → quote → swap). Handles CLASSIC and UniswapX response shapes, strips null permitData, sends chain IDs as strings. executeSwapWithScoutWallet handles Permit2 approval before swap. estimateUsdFromTokenAmount derives USD value server-side from token address + raw amount.
-- Env vars needed: `UNISWAP_API_KEY` (from Uniswap Developer Platform), `SCOUT_PRIVATE_KEY` (Scout's backend wallet), `SCOUT_API_TOKEN` (auth for Scout endpoints), `DELEGATION_AUTH_SECRET` (HMAC secret for spend tokens; falls back to derived-from-SCOUT_PRIVATE_KEY with warning)
+- Env vars needed: `UNISWAP_API_KEY` (from Uniswap Developer Platform), `SCOUT_PRIVATE_KEY` (Scout's backend wallet), `SCOUT_API_TOKEN` (auth for Scout endpoints), `DELEGATION_AUTH_SECRET` (HMAC secret for spend tokens; required in production — server refuses to start without it; in dev, falls back to derived-from-SCOUT_PRIVATE_KEY with console warning)
 - Depends on: `@workspace/db`, `@workspace/api-zod`
 - `pnpm --filter @workspace/api-server run dev` — run the dev server
 - `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
