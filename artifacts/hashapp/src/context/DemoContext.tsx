@@ -112,6 +112,14 @@ interface DemoState {
       spendToken?: string;
       delegationExpiry?: number;
     },
+    veniceFields?: {
+      privateReasoningUsed: boolean;
+      reasoningProvider: string;
+      reasonSummary: string;
+      disclosureSummary: string;
+      demo?: boolean;
+      failed?: boolean;
+    },
   ) => void;
   recordDelegationSpend: (
     permissionId: string,
@@ -404,6 +412,14 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
       spendToken?: string;
       delegationExpiry?: number;
     },
+    veniceFields?: {
+      privateReasoningUsed: boolean;
+      reasoningProvider: string;
+      reasonSummary: string;
+      disclosureSummary: string;
+      demo?: boolean;
+      failed?: boolean;
+    },
   ) => {
     const isDelegation = !!delegationFields;
     setFeed(prev => prev.map(item => 
@@ -424,6 +440,14 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
             isDelegation,
             spendToken: delegationFields?.spendToken,
             delegationExpiry: delegationFields?.delegationExpiry,
+            ...(veniceFields ? {
+              privateReasoningUsed: veniceFields.privateReasoningUsed,
+              reasoningProvider: veniceFields.reasoningProvider,
+              reasonSummary: veniceFields.failed ? 'Private analysis unavailable' : veniceFields.reasonSummary,
+              disclosureSummary: veniceFields.failed
+                ? 'Venice was requested but could not complete analysis. Action approved without private review.'
+                : veniceFields.disclosureSummary,
+            } : {}),
           } 
         : item
     ));
