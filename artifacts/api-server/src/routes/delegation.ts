@@ -32,6 +32,8 @@ const CHALLENGE_TTL_SECONDS = 120;
 const CHALLENGE_PREFIX = 'hashapp-delegation-register';
 const usedChallenges = new Map<string, number>();
 
+const contextOwnerRegistry = new Map<string, { owner: string; registeredAt: number }>();
+
 function pruneExpiredEntries() {
   const now = Date.now();
   const nowSec = Math.floor(now / 1000);
@@ -43,6 +45,9 @@ function pruneExpiredEntries() {
   }
   for (const [msg, ts] of usedChallenges) {
     if (nowSec - ts > CHALLENGE_TTL_SECONDS * 2) usedChallenges.delete(msg);
+  }
+  for (const [ctx, entry] of contextOwnerRegistry) {
+    if (nowSec - entry.registeredAt > SPEND_TOKEN_TTL_SECONDS) contextOwnerRegistry.delete(ctx);
   }
 }
 
@@ -165,6 +170,20 @@ delegationRouter.post('/delegation/register', async (req, res) => {
       return;
     }
 
+    const ctxKey = permissionsContext.toLowerCase();
+    const existingOwner = contextOwnerRegistry.get(ctxKey);
+    if (existingOwner) {
+      if (existingOwner.owner !== delegatorAddress.toLowerCase()) {
+        res.status(403).json({ error: 'Context already bound to a different owner' });
+        return;
+      }
+    } else {
+      contextOwnerRegistry.set(ctxKey, {
+        owner: delegatorAddress.toLowerCase(),
+        registeredAt: Math.floor(Date.now() / 1000),
+      });
+    }
+
     const issuedAt = Math.floor(Date.now() / 1000);
     const spendToken = createSpendToken(permissionsContext, delegatorAddress, issuedAt);
 
@@ -200,6 +219,17 @@ delegationRouter.post('/delegation/spend', async (req, res) => {
     const tokenValidation = validateSpendToken(spendToken, permissionsContext);
     if (!tokenValidation.valid) {
       res.status(401).json({ error: tokenValidation.error || 'Unauthorized' });
+      return;
+    }
+
+    const ctxKey = permissionsContext.toLowerCase();
+    const registeredOwner = contextOwnerRegistry.get(ctxKey);
+    if (!registeredOwner) {
+      res.status(403).json({ error: 'Context not registered' });
+      return;
+    }
+    if (tokenValidation.delegatorAddress !== registeredOwner.owner) {
+      res.status(403).json({ error: 'Token owner does not match registered context owner' });
       return;
     }
 
