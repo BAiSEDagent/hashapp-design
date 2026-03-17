@@ -306,7 +306,7 @@ function ReasoningPrivacyCard() {
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center justify-between px-5 py-3 border-t border-white/[0.04] hover:bg-white/[0.02] transition-colors"
       >
-        <span className="text-[10px] text-muted-foreground/30 font-medium">Details</span>
+        <span className="text-[10px] text-muted-foreground/30 font-medium">Privacy details</span>
         <ChevronDown size={12} className={`text-muted-foreground/30 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
       </button>
 
