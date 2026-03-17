@@ -91,19 +91,17 @@ export default function Money() {
               </>
             ) : (
               <>
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-3">
                   <Wallet size={13} className="text-muted-foreground/50" />
                   <span className="text-[12px] text-muted-foreground/60 font-medium">
                     Wallet Balance
                   </span>
                 </div>
-                <h2 className="text-[48px] font-bold tracking-tighter text-foreground leading-none mb-1.5">
-                  —
-                </h2>
-                <p className="text-[12px] text-muted-foreground/40 leading-relaxed">
+                <p className="text-[13px] text-muted-foreground/50 leading-relaxed mb-1">
                   Connect a wallet to see your real USDC balance.
-                  <br />
-                  <span className="text-muted-foreground/30">Spend permissions and activity below are demo data — not drawn from a real wallet.</span>
+                </p>
+                <p className="text-[11px] text-muted-foreground/25 leading-relaxed">
+                  Spend permissions and activity below are demo data — not drawn from a real wallet.
                 </p>
               </>
             )}

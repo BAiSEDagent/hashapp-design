@@ -106,7 +106,24 @@ export default function Receipt() {
     query: { enabled: !isDelegation && !!permStruct && !!item?.isReal },
   });
 
-  if (!item) return <div className="p-8 text-center mt-20 text-muted-foreground">Receipt not found</div>;
+  if (!item) return (
+    <div className="fixed inset-0 z-[100] flex justify-center bg-background">
+      <div className="w-full max-w-[430px] bg-background h-full flex flex-col relative">
+        <div className="flex items-center justify-between p-6">
+          <Link href="/" className="p-2 -ml-2 rounded-full hover:bg-white/[0.04] active:bg-white/[0.06] transition-colors">
+            <X size={20} className="text-foreground/80" />
+          </Link>
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center px-6 pb-20">
+          <div className="w-14 h-14 rounded-full bg-zinc-800/60 border border-zinc-700/40 flex items-center justify-center mb-4">
+            <Eye size={20} className="text-zinc-500" />
+          </div>
+          <p className="text-[15px] font-medium text-muted-foreground/60 mb-1">Receipt not found</p>
+          <p className="text-[12px] text-muted-foreground/30">This transaction may have been removed.</p>
+        </div>
+      </div>
+    </div>
+  );
 
   const isBlocked = item.status === 'BLOCKED' || item.status === 'DECLINED';
   const hasRealProof = item.isReal && item.txHash;
@@ -203,8 +220,12 @@ export default function Receipt() {
               <div className="flex items-center gap-2">
                 <AgentAvatar size="sm" />
                 <div className="text-right">
-                  <span className="text-[12px] font-medium block">{connectedAgent?.name ?? 'Agent'}</span>
-                  <span className="text-[9px] text-muted-foreground/30 font-mono tracking-wide">{connectedAgent?.address ?? 'No agent'}</span>
+                  <span className="text-[12px] font-medium block">{connectedAgent?.name ?? 'Scout'}</span>
+                  {connectedAgent?.address ? (
+                    <span className="text-[9px] text-muted-foreground/30 font-mono tracking-wide">{connectedAgent.address}</span>
+                  ) : (
+                    <span className="text-[9px] text-muted-foreground/20">Demo agent</span>
+                  )}
                 </div>
               </div>
             </div>

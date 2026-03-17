@@ -42,11 +42,17 @@ export default function Activity() {
       <header className="px-6 pt-12 pb-5 flex items-center justify-between sticky top-0 bg-background/95 backdrop-blur-xl z-10">
         <div>
           <h1 className="text-[28px] font-bold tracking-tight">Activity</h1>
-          <p className="text-[11px] text-muted-foreground/50 mt-0.5 font-mono tracking-wide">{connectedAgent?.address ?? 'No agent connected'}</p>
+          {connectedAgent ? (
+            <p className="text-[11px] text-muted-foreground/50 mt-0.5 font-mono tracking-wide">{connectedAgent.address}</p>
+          ) : (
+            <p className="text-[11px] text-muted-foreground/30 mt-0.5">No agent connected</p>
+          )}
         </div>
         <div className="relative">
           <AgentAvatar size="sm" />
-          <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-background" />
+          {connectedAgent && (
+            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-background" />
+          )}
         </div>
       </header>
 
@@ -62,8 +68,8 @@ export default function Activity() {
             >
               <div className="relative">
                 <AvatarIcon initial={payee.initial} colorClass={payee.color} size="md" className="shadow-md ring-1 ring-white/[0.06]" />
-                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-[1.5px] border-background flex items-center justify-center bg-blue-500 shadow-sm">
-                  <ShieldCheck size={8} className="text-white" />
+                <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-background flex items-center justify-center bg-emerald-500 shadow-sm">
+                  <ShieldCheck size={9} className="text-white" />
                 </div>
               </div>
               <span className="text-[10px] font-medium text-muted-foreground/50 w-16 text-center truncate">
@@ -194,21 +200,21 @@ function FeedCard({
             {item.amountStr}
           </span>
         </div>
-        <div className="flex justify-between items-center gap-3">
-          <div className="flex items-center gap-2 min-w-0">
-            <p className={`text-[11px] truncate leading-relaxed ${isBlocked ? 'text-muted-foreground/35' : 'text-muted-foreground/50'}`}>{item.intent}</p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 mt-0.5">
+          <p className={`text-[11px] truncate leading-relaxed flex-1 min-w-0 ${isBlocked ? 'text-muted-foreground/35' : 'text-muted-foreground/50'}`}>{item.intent}</p>
+          <StatusDot status={item.status} />
+        </div>
+        {(item.privateReasoningUsed || badgeType) && (
+          <div className="flex items-center gap-1.5 mt-1.5">
             {item.privateReasoningUsed && (
               <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-violet-500/8 border border-violet-500/10 text-[8px] font-medium text-violet-400/70 uppercase tracking-[0.06em]">
                 <Eye size={7} className="opacity-70" />
-                Venice-assisted
+                Venice
               </span>
             )}
             {badgeType && <TruthBadge type={badgeType} txHash={item.txHash} expiresAt={item.delegationExpiry} />}
-            <StatusDot status={item.status} />
           </div>
-        </div>
+        )}
         {isSwap && item.swapDetails && isApprovedOrAuto && (
           <div className="flex gap-3 mt-1.5 text-[9px] text-muted-foreground/35">
             <span>Rate: 1 {item.swapDetails.tokenInSymbol} = {item.swapDetails.exchangeRate} {item.swapDetails.tokenOutSymbol}</span>
