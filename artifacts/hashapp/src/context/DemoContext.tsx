@@ -278,7 +278,7 @@ function loadPersistedState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed.version === 9) return parsed;
+      if (parsed.version === 10) return parsed;
     }
   } catch {}
   return null;
@@ -295,7 +295,7 @@ function loadPersistedAgent(): ConnectedAgent | null {
 function persistState(feed: FeedItem[], rules: Rule[], spendPermissions: SpendPermission[], stage: DemoState['stage'], privateReasoningEnabled: boolean) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      version: 9,
+      version: 10,
       feed,
       rules,
       spendPermissions,

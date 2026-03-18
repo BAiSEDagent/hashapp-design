@@ -4,7 +4,7 @@ import { X, ExternalLink, Loader2, Zap, Eye } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useTransactionReceipt, useBlock, useReadContract } from 'wagmi';
 import { useDemo } from '@/context/DemoContext';
-import { USE_METAMASK_DELEGATION, SCOUT_SESSION_ADDRESS } from '@/config/delegation';
+import { USE_METAMASK_DELEGATION, DELEGATION_RECIPIENT_ADDRESS } from '@/config/delegation';
 import { executeDelegationSpend } from '@/lib/delegationSpend';
 import {
   SPEND_PERMISSION_MANAGER_ADDRESS,
@@ -60,7 +60,7 @@ export default function Receipt() {
         console.log('[Spend] Triggering delegated spend...', {
           permissionsContext: delegationContext.slice(0, 20) + '...',
           delegationManager: delegationMgr,
-          recipient: SCOUT_SESSION_ADDRESS,
+          recipient: DELEGATION_RECIPIENT_ADDRESS,
           amountUsdc: '5',
         });
       }
@@ -68,7 +68,7 @@ export default function Receipt() {
         permissionsContext: delegationContext,
         delegationManager: delegationMgr,
         amountUsdc: '5',
-        recipient: SCOUT_SESSION_ADDRESS,
+        recipient: DELEGATION_RECIPIENT_ADDRESS,
         spendToken: delegationSpendToken,
       });
       if (import.meta.env.DEV) {
@@ -220,7 +220,7 @@ export default function Receipt() {
               <div className="flex items-center gap-2">
                 <AgentAvatar size="sm" />
                 <div className="text-right">
-                  <span className="text-[12px] font-medium block">{connectedAgent?.name ?? 'Scout'}</span>
+                  <span className="text-[12px] font-medium block">{connectedAgent?.name ?? 'Agent'}</span>
                   {connectedAgent?.address ? (
                     <span className="text-[9px] text-muted-foreground/30 font-mono tracking-wide">{connectedAgent.address}</span>
                   ) : (

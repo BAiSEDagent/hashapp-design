@@ -53,27 +53,30 @@ Every package extends `tsconfig.base.json` which sets `composite: true`. The roo
 
 ### `artifacts/hashapp` (`@workspace/hashapp`)
 
-Hashapp — consumer-grade dark premium spending app for AI agents. Demo-only frontend prototype (no backend). Built with React + Vite + Tailwind CSS + framer-motion + wouter.
+Hashapp — consumer-grade dark premium BYOA money app for AI agents. Built with React + Vite + Tailwind CSS + framer-motion + wouter.
 
-- **Theme**: Dark-only (near-black bg hsl 220 20% 4%), blue accent (hsl 220 60% 55%), mobile-first max-width 430px
-- **Routes**: `/money` (Money — non-custodial wallet allocation), `/` (Activity Feed with trusted destinations rail), `/agent` (Scout Agent Detail), `/rules` (Spending Rules), `/receipt/:id` (Receipt Detail)
-- **Nav tabs**: Money | Activity | Scout | Rules
-- **Money model**: Explicitly non-custodial — funds live in user's connected Base smart wallet with scoped allocation to Scout. Language: "Available for Scout", "USDC · remaining under active rules", "Hashapp never takes custody"
-- **Wallet connection**: wagmi + viem configured for Base Sepolia (injected + Coinbase Wallet connectors). Shows real wallet address when connected, honest "No Wallet Connected" when not. Connect buttons rendered from wagmi connectors list.
+- **Theme**: Dark-only (near-black bg hsl 220 20% 4%), blue accent (hsl 220 60% 55%), mobile-first max-width 430px, Cash App-grade aesthetic
+- **Architecture**: WalletGate landing page (front door) → 5-tab app (Money, Activity, DeFi, Agent, Rules). No bottom nav until wallet is connected.
+- **Routes**: `/money` (Money — balances + spend permissions), `/` (Activity Feed with trusted destinations rail), `/defi` (DeFi — Swap to Pay via Uniswap), `/agent` (Agent — BYOA identity + presence), `/rules` (Rules — spending constraints + Venice privacy controls), `/receipt/:id` (Receipt Detail)
+- **Nav tabs**: Money | Activity | DeFi | Agent | Rules
+- **Wallet connection**: Global via WalletGate. wagmi + viem configured for Base Sepolia (injected + Coinbase Wallet connectors). Connect once, entire app knows. No duplicate per-page connect buttons.
+- **Agent model**: BYOA (Bring Your Own Agent). 3-state flow: empty → connect → active. Agent Name + Role required, Execution Address/ENS optional. No hardcoded Scout identity. Agent page shows live presence: stats, operating state, spend permissions, auto-pay.
+- **DeFi tab**: Uniswap swap panel framed as "Swap to Pay" — settlement infrastructure, not a trading terminal. Small and disciplined.
+- **Rules tab**: Spending rules + Venice Reasoning & Privacy controls (policy surface, not identity).
 - **Demo Flow**: Load → 3s pause → pending spend permission slides in → user approves → navigate to Rules → toggle off "Block spend permissions (recurring)" → return to Activity → 2s → new blocked entry appears
-- **Honesty rules**: No fake tx hashes in hardcoded feed. Receipt shows "Demo transaction · no onchain proof" for demo items. Basescan links only appear when `isReal && txHash`. Rules footer: "Rules managed by Hashapp" (not "enforced onchain"). Agent footer: "ERC-8004 · Base Sepolia" (no fake token ID). Dead CTAs removed (no "Increase limit", "Adjust budget", "Pause Scout").
-- **Persistence**: localStorage (key: `hashapp_demo_state`, version 8) persists feed, rules, spendPermissions, stage, and privateReasoningEnabled across refreshes. Version bumped from 7→8 when privateReasoningEnabled toggle was added.
-- **Key Design**: Intent-aware language ("Scout bought research credits..."), plain-English rules, honest onchain references only when backed by real proof, spend permission terminology for recurring charges
+- **Honesty rules**: No fake tx hashes in hardcoded feed. Receipt shows "Demo transaction · no onchain proof" for demo items. Basescan links only appear when `isReal && txHash`. Rules footer: "Rules managed by Hashapp" (not "enforced onchain"). No fake standards claims. Dead CTAs removed.
+- **Persistence**: localStorage (key: `hashapp_demo_state`, version 10) persists feed, rules, spendPermissions, stage, and privateReasoningEnabled across refreshes.
+- **Key Design**: Intent-aware language, plain-English rules, honest onchain references only when backed by real proof, spend permission terminology for recurring charges
 - **MetaMask Delegation Pivot**: Feature-gated behind `VITE_USE_METAMASK_DELEGATION=true`. Replaces Coinbase SpendPermissionManager with MetaMask Smart Accounts Kit + ERC-7715/ERC-7710 Delegation Framework. Key files:
   - `src/config/delegation.ts` — feature flag, chain, USDC address, DelegationManager address, session account address
   - `src/lib/metamaskPermissions.ts` — ERC-7715 `requestExecutionPermissions` wrapper
-  - `src/lib/sessionAccount.ts` — Scout session account from `VITE_SCOUT_SESSION_ADDRESS` env var
+  - `src/lib/sessionAccount.ts` — Delegation recipient address from `VITE_SCOUT_SESSION_ADDRESS` env var
   - `src/lib/delegationSpend.ts` — POSTs to `/api/delegation/spend` for server-side ERC-7710 redemption (`amountUsdc` is string, regex-validated server-side)
   - `src/lib/delegationAuth.ts` — Server-issued challenge flow: fetches nonce from `/api/delegation/challenge`, signs challenge message, registers via `/api/delegation/register`
   - `src/config/wallet.ts` — feature-gated connectors (delegation: injected only; fallback: coinbaseWallet)
   - All pages (Activity, Money, Agent, Receipt) are feature-gated for delegation path
 - **TruthBadge types**: `onchain` (green, verified on-chain), `delegation` (orange, delegation-granted), `expired` (rose, delegation expired), `demo` (grey, demo data), `pending` (amber, awaiting confirmation). Delegation badges auto-downgrade to `expired` when `expiresAt <= now`.
-- **Venice private reasoning**: Real behavior-changing integration. When `privateReasoningEnabled` is ON and user approves a pending action, frontend calls `/api/venice/analyze` before completing approval. Backend returns reasoning summary (real Venice API if `VENICE_API_KEY` is set, structured demo fallback if not). Result stored on FeedItem: `privateReasoningUsed`, `reasoningProvider`, `reasonSummary`, `disclosureSummary`. When OFF, Venice call is skipped entirely — no Venice fields on new approvals. Toggle controls real behavior, not just visibility. Surfaces in: Agent page "Reasoning & Privacy" card with real toggle + accordion, Activity feed violet "Venice-assisted" badge (only on items where Venice ran), Receipt "Reasoning Provenance" with summary + disclosure. Failure honesty: if Venice call fails, action still approves with "Private analysis unavailable" indicator. Demo approve button available without wallet connection.
+- **Venice private reasoning**: Real behavior-changing integration. When `privateReasoningEnabled` is ON and user approves a pending action, frontend calls `/api/venice/analyze` before completing approval. Backend returns reasoning summary (real Venice API if `VENICE_API_KEY` is set, structured demo fallback if not). Result stored on FeedItem: `privateReasoningUsed`, `reasoningProvider`, `reasonSummary`, `disclosureSummary`. When OFF, Venice call is skipped entirely — no Venice fields on new approvals. Toggle controls real behavior, not just visibility. Surfaces in: Rules page "Reasoning & Privacy" card with real toggle + accordion, Activity feed violet "Venice-assisted" badge (only on items where Venice ran), Receipt "Reasoning Provenance" with summary + disclosure. Failure honesty: if Venice call fails, action still approves with "Private analysis unavailable" indicator. Demo approve button available without wallet connection.
 - **Dependencies**: react, framer-motion, wouter, lucide-react, tailwindcss, clsx, tailwind-merge, wagmi, viem, @metamask/smart-accounts-kit@0.4.0-beta.1
 
 ### `artifacts/api-server` (`@workspace/api-server`)

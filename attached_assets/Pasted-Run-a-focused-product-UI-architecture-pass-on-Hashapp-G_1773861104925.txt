@@ -1,0 +1,136 @@
+Run a focused product/UI architecture pass on Hashapp.
+Goal
+Fix the broken connection/onboarding flow, make BYOA true in the UX, and improve overall product coherence without bloating the app.
+
+Product truth
+Hashapp is a BYOA money app for agents.
+It is:
+bounded authority
+private/public action control
+payment proof
+receipts
+
+It is not:
+a generic chat shell
+a generic swap terminal
+a Scout-only product
+a partner-feature collage
+Core problems to fix
+Fragmented connection state
+Wallet connection must be global.
+If the user connects once, the whole app knows.
+
+Missing front door
+Do not drop first-time users straight into the tabbed app.
+Add a real landing/entry state.
+
+BYOA identity is still too weak
+Default state should be:
+No Agent Connected
+not hardcoded Scout.
+
+Agent linking is underdefined
+Separate:
+Connect Wallet
+from
+Connect Agent
+
+Request model is under-specified
+We need the app to feel like a coherent request/approval/proof system.
+
+Build this architecture
+State A — Unconnected
+Landing page with:
+product framing
+Connect Wallet CTA
+no bottom nav yet
+
+State B — Wallet connected, no agent linked
+Show onboarding handshake:
+headline: No Agent Connected
+subtext: Connect an agent to request payments, use private reasoning, and act within your spending rules.
+CTA: Connect Agent
+
+State C — Wallet connected, agent linked
+Show full app:
+Money
+Activity
+Agent
+Rules
+
+Connection model
+Connect Wallet
+Global app auth / identity / funding connection.
+
+Connect Agent
+A separate lightweight onboarding sheet:
+Agent Name
+Role / Description
+optional execution identity / ENS as advanced field only if needed
+private reasoning enabled state
+
+Do not force the execution address in the basic flow unless it’s required.
+Do not pretend ERC-8004 auto-resolution exists if it is not implemented.
+
+Agent page requirements
+nav label remains Agent
+if no linked agent: empty state
+if linked: show custom name/role
+keep the Venice Reasoning & Privacy card
+add Edit Agent
+add Disconnect Agent
+
+Activity / Receipt requirements
+Introduce or reinforce a structured request model so items can cleanly show:
+who requested the action
+intent / reason summary
+whether Venice private reasoning was used
+whether swap-to-pay was allowed
+proof / provenance / disclosure state
+
+Venice requirements
+keep Venice as an agent capability
+no Venice tab
+no Venice mode
+no global provider theater
+
+Uniswap requirements
+keep Swap to Pay subordinate to payment flow
+do not let Money become a DEX dashboard
+
+Design direction
+Use a clean, industrial, financial aesthetic:
+fewer cards
+stronger hierarchy
+less dashboard clutter
+honest empty states
+intentional spacing
+serious tone
+
+Deliverable
+Return exactly:
+architecture changes made
+files changed
+new global state fields
+screenshots of:
+landing page
+no-agent-connected state
+connect-agent sheet
+linked-agent state
+commit hash
+branch
+pushed or not
+
+Success condition
+A judge should immediately understand:
+connect wallet once
+link your own agent
+the agent can request actions
+Hashapp controls, proves, and explains those actions
+
+Do not overbuild.
+Make it coherent.
+
+---
+
+That is the prompt I’d use.

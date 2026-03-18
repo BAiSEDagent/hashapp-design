@@ -1,0 +1,126 @@
+		Run a product architecture + UX pass on Hashapp with the updated direction below. Goal Make the app coherent, consumer-grade, and BYOA-honest while preserving the real proof work already completed. Product truth Hashapp is a BYOA money app for agents. It is:
+	•	a bounded-authority payment layer
+	•	a control and approval surface
+	•	a proof and receipt surface
+		    
+		It is not:
+	•	a generic DEX dashboard
+	•	a chat-first shell
+	•	a Scout-only product
+	•	a partner-feature collage
+		Design direction Target: Cash App-grade crypto UX Meaning:
+	•	calm
+	•	premium
+	•	high trust
+	•	minimal cognitive load
+	•	big touch targets
+	•	clean hierarchy
+		    
+	•	simple, consumer-financial feel
+		Do not build:
+	•	industrial control-panel UI
+	•	Web3 dashboard clutter
+	•	feature sprawl in a single tab
+	•	giant partner-branded surfaces
+		Core architecture changes
+	1	Global wallet connection
+		 Wallet connection must be global across the app. If the user connects once, the whole app knows.
+	2	Add a real front door
+		 Do not drop users directly into the tabbed interface. Create a landing / entry state with:  
+	•	product framing
+	•	Connect Wallet CTA
+	•	no bottom nav until connected
+	3	Separate wallet connection from agent linking
+		 These are different concepts. #### Connect Wallet
+	•	app-wide identity and funding connection
+		#### Connect Agent
+	•	link the user’s agent identity/profile into Hashapp
+	•	do not conflate this with wallet auth
+		Updated tab model Use this direction:    
+	•	Money
+	•	Activity
+	•	DeFi
+	•	Agent
+	•	Rules or Settings
+		Meaning
+	•	Money = balances, payment actions, receipts context
+	•	Activity = request/proof/history feed
+	•	DeFi = Uniswap and future DeFi tools
+	•	Agent = linked agent identity/profile
+	•	Rules/Settings = privacy, permissions, policy controls
+		Agent/BYOA direction Empty state If no agent is linked:
+	•	headline: No Agent Connected
+  
+	•	subtext: Connect an agent to request payments and act within your spending rules.
+	•	CTA: Connect Agent
+		Connect Agent flow Bottom sheet/modal:
+	•	Agent Name
+	•	Role / Description
+	•	optional execution identity / ENS as an advanced field only if actually needed
+	•	do not force address input in the basic flow
+		Active state When linked:
+	•	page title uses the linked agent name
+	•	show role / description
+	•	show optional identity details
+	•	add Edit Agent
+	•	add Disconnect Agent
+  
+		Rule Do not hardcode Scout as the default product identity. Scout can remain a demo/example, but BYOA must be the truth. Venice direction Keep
+	•	the toggle
+	•	the accordion
+	•	optional use of private reasoning
+	•	subtle provenance when Venice actually informed an action
+		Likely move Move the Venice control surface from the Agent page into Rules/Settings if that makes the product cleaner. Why:
+	•	it behaves more like a policy/control
+	•	not like identity
+		  
+	•	not like a separate feature mode
+		Keep this exact product stance
+	•	no Venice Mode
+	•	no separate Venice tab
+	•	no provider theater throughout the app
+		Venice UX The toggle must remain real. If ON:
+	•	Venice/private review can run
+		If OFF:
+	•	it does not
+		Accordion/disclosure content is good. Keep it.  
+		Uniswap / DeFi direction Add a DeFi tab Move Uniswap there for now. Why It needs a home, but it should not dominate Money. The DeFi tab gives it room without turning the product into a DEX shell. In DeFi Use accordion/dropdown structure for now. Keep it modular and clean. Product framing Use:
+	•	Swap to Pay
+	•	Uniswap as settlement/conversion infrastructure
+		  
+		Do not frame it as:
+	•	full trading terminal
+	•	generic DEX experience
+		Request/proof model Strengthen the app around a structured request model so Activity and Receipt feel like one system. Each action/request should be able to express:
+	•	who asked
+	•	what they wanted
+	•	amount / token
+	•	whether private reasoning was used
+	•	whether swap-to-pay was allowed
+	•	what became public
+	•	what stayed private
+	•	proof / receipt state
+		  
+		Standards honesty Do not claim ERC-8004 or other standards support in UI unless actually implemented. If standards are only roadmap / narrative, keep that in docs, not fake helper text. Deliverable Return exactly:
+	1	architecture changes made
+	2	files changed
+	3	new global/app state fields
+	4	screenshots of:
+	5	landing page
+	6	no-agent-connected state
+	7	connect-agent flow
+	8	linked-agent state
+	9	DeFi tab / Uniswap placement
+	10	Rules/Settings with Venice control
+	11	commit hash
+		  
+	6	branch
+	7	pushed or not
+		Success condition A judge should understand in under a minute:
+	•	connect wallet once
+	•	link your own agent
+	•	the agent can request actions
+	•	Hashapp controls, proves, and explains those actions
+	•	DeFi is available without overwhelming the money surface
+	•	private reasoning is optional, controlled, and not overhyped
+		Do not overbuild. Make it coherent, premium, and simple. --

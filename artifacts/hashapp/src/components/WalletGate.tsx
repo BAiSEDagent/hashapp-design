@@ -1,0 +1,87 @@
+import { useAccount, useConnect } from 'wagmi';
+import { Wallet, Shield, Eye, ArrowRight } from 'lucide-react';
+
+export function WalletGate({ children }: { children: React.ReactNode }) {
+  const { isConnected } = useAccount();
+
+  if (isConnected) {
+    return <>{children}</>;
+  }
+
+  return <LandingPage />;
+}
+
+function LandingPage() {
+  const { connectors, connect } = useConnect();
+
+  return (
+    <div className="min-h-screen bg-[#000000] w-full flex justify-center text-foreground font-sans">
+      <div className="w-full max-w-[430px] bg-background min-h-screen relative flex flex-col shadow-2xl border-x border-white/[0.04]">
+        <div className="flex-1 flex flex-col items-center justify-center px-8">
+          <div className="flex flex-col items-center text-center w-full">
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 border border-primary/15 flex items-center justify-center mb-8">
+              <span className="text-[28px] font-bold text-primary tracking-tighter">#</span>
+            </div>
+
+            <h1 className="text-[32px] font-bold tracking-tight leading-tight mb-3">
+              Hashapp
+            </h1>
+            <p className="text-[15px] text-muted-foreground/60 leading-relaxed mb-12 max-w-[300px]">
+              A money app for your AI agents. Control what they spend, see what they do, prove what happened.
+            </p>
+
+            <div className="w-full flex flex-col gap-3 mb-12">
+              <Feature
+                icon={<Shield size={16} className="text-emerald-400" />}
+                title="Bounded authority"
+                desc="Set spending rules. Your agent operates within your limits."
+              />
+              <Feature
+                icon={<Eye size={16} className="text-violet-400" />}
+                title="Proof & receipts"
+                desc="Every action is logged. Private reasoning stays private."
+              />
+              <Feature
+                icon={<ArrowRight size={16} className="text-primary" />}
+                title="Bring your own agent"
+                desc="Connect any agent. Not locked to a single provider."
+              />
+            </div>
+
+            <div className="w-full flex flex-col gap-3">
+              {connectors.map((connector) => (
+                <button
+                  key={connector.uid}
+                  onClick={() => connect({ connector })}
+                  className="w-full py-3.5 rounded-2xl text-[15px] font-semibold transition-all bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] shadow-lg shadow-primary/20"
+                >
+                  Connect {connector.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="pb-8 pt-4 text-center">
+          <p className="text-[10px] text-muted-foreground/20 font-medium tracking-widest uppercase">
+            Base Sepolia · Testnet
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Feature({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
+  return (
+    <div className="flex items-start gap-4 text-left px-2 py-3">
+      <div className="w-9 h-9 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center shrink-0 mt-0.5">
+        {icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <h3 className="text-[14px] font-semibold text-foreground mb-0.5">{title}</h3>
+        <p className="text-[12px] text-muted-foreground/45 leading-relaxed">{desc}</p>
+      </div>
+    </div>
+  );
+}

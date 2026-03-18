@@ -4,6 +4,7 @@ import { WagmiProvider } from "wagmi";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { MobileLayout } from "@/components/layout/MobileLayout";
+import { WalletGate } from "@/components/WalletGate";
 import { DemoProvider } from "@/context/DemoContext";
 import { walletConfig } from "@/config/wallet";
 
@@ -12,22 +13,26 @@ import Activity from "@/pages/Activity";
 import Receipt from "@/pages/Receipt";
 import Rules from "@/pages/Rules";
 import Agent from "@/pages/Agent";
+import DeFi from "@/pages/DeFi";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
 
 function Router() {
   return (
-    <MobileLayout>
-      <Switch>
-        <Route path="/" component={Activity} />
-        <Route path="/money" component={Money} />
-        <Route path="/receipt/:id" component={Receipt} />
-        <Route path="/rules" component={Rules} />
-        <Route path="/agent" component={Agent} />
-        <Route component={NotFound} />
-      </Switch>
-    </MobileLayout>
+    <WalletGate>
+      <MobileLayout>
+        <Switch>
+          <Route path="/" component={Activity} />
+          <Route path="/money" component={Money} />
+          <Route path="/receipt/:id" component={Receipt} />
+          <Route path="/rules" component={Rules} />
+          <Route path="/agent" component={Agent} />
+          <Route path="/defi" component={DeFi} />
+          <Route component={NotFound} />
+        </Switch>
+      </MobileLayout>
+    </WalletGate>
   );
 }
 

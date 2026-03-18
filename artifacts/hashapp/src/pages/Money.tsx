@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { Wallet, Shield, ArrowRight, RefreshCw, Loader2, Zap } from 'lucide-react';
-import { useAccount, useConnect, useDisconnect, useReadContract } from 'wagmi';
+import { useAccount, useReadContract, useDisconnect } from 'wagmi';
 import { useDemo, type SpendPermission } from '@/context/DemoContext';
 import { AvatarIcon } from '@/components/ui/AvatarIcon';
 import { AgentAvatar } from '@/components/AgentAvatar';
 import { TruthBadge } from '@/components/TruthBadge';
-import { SwapPanel } from '@/components/SwapPanel';
 import { useLocation } from 'wouter';
 import { USE_METAMASK_DELEGATION } from '@/config/delegation';
 import { executeDelegationSpend } from '@/lib/delegationSpend';
@@ -30,7 +29,6 @@ export default function Money() {
   const { feed, rules, spendPermissions, resetDemo, recordDelegationSpend, connectedAgent } = useDemo();
   const agentName = connectedAgent?.name ?? 'your agent';
   const { address, isConnected, chain } = useAccount();
-  const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
   const [, setLocation] = useLocation();
 
@@ -64,47 +62,45 @@ export default function Money() {
   return (
     <div className="flex flex-col min-h-full pb-8">
       <header className="px-6 pt-12 pb-2">
-        <h1 className="text-[28px] font-bold tracking-tight">Money</h1>
-        <p className="text-[11px] text-muted-foreground/50 mt-0.5">Your wallet · {agentName}'s allocation</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-[28px] font-bold tracking-tight">Money</h1>
+            <p className="text-[11px] text-muted-foreground/50 mt-0.5">Your wallet · {agentName}'s allocation</p>
+          </div>
+          {isConnected && truncatedAddress && (
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06]">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                <span className="text-[10px] text-muted-foreground/50 font-mono">{truncatedAddress}</span>
+              </div>
+              <button
+                onClick={() => disconnect()}
+                className="text-[9px] text-muted-foreground/30 hover:text-muted-foreground/50 transition-colors"
+              >
+                ×
+              </button>
+            </div>
+          )}
+        </div>
       </header>
 
       <div className="px-6 pt-5 flex flex-col gap-4">
-
         <div className="relative bg-card rounded-2xl p-6 border border-border/50 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.03] via-transparent to-transparent" />
           <div className="relative">
-            {isConnected ? (
-              <>
-                <div className="flex items-center gap-2 mb-2">
-                  <Wallet size={13} className="text-muted-foreground/50" />
-                  <span className="text-[12px] text-muted-foreground/60 font-medium">
-                    Wallet Balance (USDC)
-                  </span>
-                  <TruthBadge type="onchain" />
-                </div>
-                <h2 className="text-[48px] font-bold tracking-tighter text-foreground leading-none mb-1.5">
-                  {usdcBalance !== null ? `$${usdcBalance}` : '—'}
-                </h2>
-                <p className="text-[12px] text-muted-foreground/40">
-                  USDC · {chain?.name || 'Base Sepolia'} · {truncatedAddress}
-                </p>
-              </>
-            ) : (
-              <>
-                <div className="flex items-center gap-2 mb-3">
-                  <Wallet size={13} className="text-muted-foreground/50" />
-                  <span className="text-[12px] text-muted-foreground/60 font-medium">
-                    Wallet Balance
-                  </span>
-                </div>
-                <p className="text-[13px] text-muted-foreground/50 leading-relaxed mb-1">
-                  Connect a wallet to see your real USDC balance.
-                </p>
-                <p className="text-[11px] text-muted-foreground/25 leading-relaxed">
-                  Spend permissions and activity below are demo data — not drawn from a real wallet.
-                </p>
-              </>
-            )}
+            <div className="flex items-center gap-2 mb-2">
+              <Wallet size={13} className="text-muted-foreground/50" />
+              <span className="text-[12px] text-muted-foreground/60 font-medium">
+                Wallet Balance (USDC)
+              </span>
+              <TruthBadge type="onchain" />
+            </div>
+            <h2 className="text-[48px] font-bold tracking-tighter text-foreground leading-none mb-1.5">
+              {usdcBalance !== null ? `$${usdcBalance}` : '—'}
+            </h2>
+            <p className="text-[12px] text-muted-foreground/40">
+              USDC · {chain?.name || 'Base Sepolia'} · {truncatedAddress}
+            </p>
 
             {activePermissions.length > 0 && (
               <div className="mt-5 pt-4 border-t border-white/[0.06]">
@@ -123,8 +119,6 @@ export default function Money() {
             )}
           </div>
         </div>
-
-        <SwapPanel />
 
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-card rounded-2xl p-4 border border-border/30">
@@ -168,61 +162,6 @@ export default function Money() {
             <p className="text-[10px] text-muted-foreground/40">{agentName} can only spend within your constraints</p>
           </div>
           <ArrowRight size={14} className="text-muted-foreground/25 shrink-0" />
-        </div>
-
-        <div className="bg-card rounded-2xl p-4 border border-border/30 mt-1">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-7 h-7 rounded-full bg-blue-500/10 flex items-center justify-center">
-                <Wallet size={13} className="text-blue-400/80" />
-              </div>
-              <div>
-                <p className="text-[12px] font-medium text-foreground">
-                  {isConnected ? 'Connected Wallet' : 'No Wallet Connected'}
-                </p>
-                {isConnected && truncatedAddress && (
-                  <p className="text-[10px] text-muted-foreground/35 font-mono">
-                    {truncatedAddress} · {chain?.name || 'Base Sepolia'}
-                  </p>
-                )}
-              </div>
-            </div>
-            {isConnected ? (
-              <button
-                onClick={() => disconnect()}
-                className="text-[10px] text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors"
-              >
-                Disconnect
-              </button>
-            ) : null}
-          </div>
-
-          {isConnected ? (
-            <p className="text-[10px] text-muted-foreground/35 leading-relaxed pl-10">
-              {USE_METAMASK_DELEGATION
-                ? `Funds stay in your smart wallet. ${agentName} operates through MetaMask delegated permissions — Hashapp never takes custody.`
-                : `Funds stay in your smart wallet. ${agentName} operates through scoped permissions — Hashapp never takes custody.`}
-            </p>
-          ) : (
-            <div className="pl-10">
-              <p className="text-[10px] text-muted-foreground/35 leading-relaxed mb-3">
-                {USE_METAMASK_DELEGATION
-                  ? 'Connect MetaMask to enable delegated spend permissions on Base. Hashapp never takes custody of your funds.'
-                  : 'Connect a wallet to enable real spend permissions on Base. Hashapp never takes custody of your funds.'}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {connectors.map((connector) => (
-                  <button
-                    key={connector.uid}
-                    onClick={() => connect({ connector })}
-                    className="text-[11px] font-medium text-primary/80 bg-primary/8 hover:bg-primary/12 px-3 py-1.5 rounded-lg transition-colors"
-                  >
-                    {connector.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         <button

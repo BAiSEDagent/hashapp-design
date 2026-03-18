@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { Shield, ArrowRight, CheckCircle2, Zap, RefreshCw, ArrowLeftRight, Eye, ChevronDown, X, Bot, Pencil, Unplug } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { Shield, ArrowRight, CheckCircle2, Zap, RefreshCw, ArrowLeftRight, X, Bot, Pencil, Unplug } from 'lucide-react';
 import { useAccount, useReadContract } from 'wagmi';
 import { useDemo } from '@/context/DemoContext';
 import type { ConnectedAgent } from '@/context/DemoContext';
@@ -56,7 +56,7 @@ function AgentEmptyState({ onConnect }: { onConnect: () => void }) {
         </div>
         <h1 className="text-[22px] font-bold tracking-tight mb-2">No Agent Connected</h1>
         <p className="text-[13px] text-muted-foreground/50 leading-relaxed mb-8">
-          Connect an agent to request payments, use private reasoning, and act within your spending rules.
+          Connect an agent to request payments and act within your spending rules.
         </p>
         <button
           onClick={onConnect}
@@ -68,7 +68,7 @@ function AgentEmptyState({ onConnect }: { onConnect: () => void }) {
 
       <div className="mt-auto pt-10 text-center pb-4">
         <p className="text-[10px] text-muted-foreground/20 font-medium tracking-widest uppercase">
-          Base Sepolia
+          Bring your own agent
         </p>
       </div>
     </div>
@@ -86,17 +86,12 @@ function ConnectAgentSheet({
   const [name, setName] = useState(initialValues?.name ?? '');
   const [role, setRole] = useState(initialValues?.role ?? '');
   const [address, setAddress] = useState(initialValues?.address ?? '');
-  const [errors, setErrors] = useState<{ name?: string; role?: string; address?: string }>({});
+  const [errors, setErrors] = useState<{ name?: string; role?: string }>({});
 
   const validate = () => {
     const newErrors: typeof errors = {};
     if (!name.trim()) newErrors.name = 'Required';
     if (!role.trim()) newErrors.role = 'Required';
-    if (!address.trim()) {
-      newErrors.address = 'Required';
-    } else if (!address.trim().startsWith('0x') && !address.trim().includes('.eth')) {
-      newErrors.address = 'Must start with 0x or contain .eth';
-    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -161,6 +156,7 @@ function ConnectAgentSheet({
           <div>
             <label className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-1.5 block">
               Execution Address or ENS
+              <span className="text-muted-foreground/25 normal-case tracking-normal ml-1.5">optional</span>
             </label>
             <input
               type="text"
@@ -169,7 +165,6 @@ function ConnectAgentSheet({
               placeholder="0x... or name.eth"
               className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700/40 text-[14px] text-foreground placeholder:text-zinc-600 focus:outline-none focus:border-primary/50 transition-colors font-mono text-[13px]"
             />
-            {errors.address && <p className="text-[10px] text-rose-400 mt-1">{errors.address}</p>}
           </div>
 
           <button
@@ -194,8 +189,8 @@ function AgentActiveState({
   const { rules, feed, spendPermissions, connectedAgent, recordScoutSwapAndPay } = useDemo();
   const { address, isConnected } = useAccount();
   const [, setLocation] = useLocation();
-  const [scoutPayState, setScoutPayState] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
-  const [scoutPayError, setScoutPayError] = useState<string | null>(null);
+  const [autoPayState, setAutoPayState] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
+  const [autoPayError, setAutoPayError] = useState<string | null>(null);
   const activeRulesCount = rules.filter(r => r.enabled).length;
   const approvedCount = feed.filter(i => i.status === 'APPROVED' || i.status === 'AUTO_APPROVED').length;
   const blockedCount = feed.filter(i => i.status === 'BLOCKED').length;
@@ -219,9 +214,9 @@ function AgentActiveState({
     ? `${address.slice(0, 6)}...${address.slice(-4)}` 
     : null;
 
-  const handleScoutAutoPay = useCallback(async () => {
-    setScoutPayState('running');
-    setScoutPayError(null);
+  const handleAutoPay = useCallback(async () => {
+    setAutoPayState('running');
+    setAutoPayError(null);
     try {
       const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
       const scoutToken = import.meta.env.VITE_SCOUT_API_TOKEN || '';
@@ -263,11 +258,11 @@ function AgentActiveState({
         vendor: 'Perplexity',
         paymentAmountUsdc: 10,
       });
-      setScoutPayState('done');
+      setAutoPayState('done');
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Auto-pay failed';
-      setScoutPayError(msg);
-      setScoutPayState('error');
+      setAutoPayError(msg);
+      setAutoPayState('error');
     }
   }, [recordScoutSwapAndPay]);
 
@@ -285,9 +280,13 @@ function AgentActiveState({
         
         <h1 className="text-[26px] font-bold tracking-tight mb-1">{agentName}</h1>
         <p className="text-[12px] text-muted-foreground/50 mb-1">{agentRole}</p>
-        <p className="text-[10px] text-muted-foreground/30 font-mono tracking-wide mb-1">{agentAddressShort}</p>
-        {isEns && (
-          <p className="text-[9px] text-muted-foreground/20 font-mono tracking-wide mb-1">{agentAddress}</p>
+        {agentAddress && (
+          <>
+            <p className="text-[10px] text-muted-foreground/30 font-mono tracking-wide mb-1">{agentAddressShort}</p>
+            {isEns && (
+              <p className="text-[9px] text-muted-foreground/20 font-mono tracking-wide mb-1">{agentAddress}</p>
+            )}
+          </>
         )}
 
         <div className="flex items-center gap-3 mt-3 mb-1">
@@ -329,7 +328,7 @@ function AgentActiveState({
           </div>
           <div className="space-y-3">
             <StateRow label="Status" value="Active" valueColor="text-emerald-400" />
-            <StateRow label="Spender address" value={agentAddressShort} mono />
+            {agentAddress && <StateRow label="Spender address" value={agentAddressShort} mono />}
             <StateRow 
               label="Spending from" 
               value={isConnected && truncatedAddress ? truncatedAddress : 'No wallet connected'} 
@@ -351,8 +350,6 @@ function AgentActiveState({
             <StateRow label="Constraints" value={`${activeRulesCount} active rules`} />
           </div>
         </div>
-
-        <ReasoningPrivacyCard />
 
         {activePermissions.length > 0 && (
           <div className="bg-card rounded-2xl p-5 border border-border/30">
@@ -378,16 +375,16 @@ function AgentActiveState({
             {agentName} can autonomously swap ETH → USDC via Uniswap then pay vendors. This triggers a real onchain swap + USDC transfer on Base Sepolia.
           </p>
           <button
-            onClick={handleScoutAutoPay}
-            disabled={scoutPayState === 'running'}
+            onClick={handleAutoPay}
+            disabled={autoPayState === 'running'}
             className="w-full py-2.5 rounded-xl text-[13px] font-semibold transition-colors bg-primary/10 text-primary hover:bg-primary/20 active:bg-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {scoutPayState === 'running' ? 'Swapping & Paying...' : scoutPayState === 'done' ? 'Done — Check Activity ✓' : `Trigger ${agentName} Swap → Pay`}
+            {autoPayState === 'running' ? 'Swapping & Paying...' : autoPayState === 'done' ? 'Done — Check Activity' : `Trigger ${agentName} Swap → Pay`}
           </button>
-          {scoutPayError && (
-            <p className="mt-2 text-[10px] text-rose-400/80">{scoutPayError}</p>
+          {autoPayError && (
+            <p className="mt-2 text-[10px] text-rose-400/80">{autoPayError}</p>
           )}
-          {scoutPayState === 'done' && (
+          {autoPayState === 'done' && (
             <p className="mt-2 text-[10px] text-emerald-400/80">SWAP + PAYMENT recorded in Activity feed with real tx hashes.</p>
           )}
         </div>
@@ -411,7 +408,7 @@ function AgentActiveState({
 
       <div className="mt-auto pt-10 text-center pb-4">
         <p className="text-[10px] text-muted-foreground/20 font-medium tracking-widest uppercase">
-          Base Sepolia
+          Bring your own agent
         </p>
       </div>
     </div>
@@ -472,80 +469,34 @@ function AgentPermissionRow({ perm }: { perm: import('@/context/DemoContext').Sp
   );
 }
 
-function ReasoningPrivacyCard() {
-  const { feed, privateReasoningEnabled, setPrivateReasoningEnabled } = useDemo();
-  const [expanded, setExpanded] = useState(false);
-
-  const lastAnalysis = useMemo(() => {
-    const veniceItem = feed.find(i => i.privateReasoningUsed);
-    if (!veniceItem) return null;
-    if (veniceItem.dateGroup === 'TODAY') return 'Today';
-    if (veniceItem.dateGroup === 'YESTERDAY') return 'Yesterday';
-    return veniceItem.dateGroup;
-  }, [feed]);
-
-  return (
-    <div className="bg-card rounded-2xl border border-border/30 overflow-hidden">
-      <div className="p-5 pb-0">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <Eye size={14} className="text-violet-400/60" />
-            <span className="text-[12px] font-semibold text-muted-foreground/50 uppercase tracking-wider">Reasoning & Privacy</span>
-          </div>
-          <button
-            onClick={() => setPrivateReasoningEnabled(!privateReasoningEnabled)}
-            className={`relative w-[36px] h-[20px] rounded-full transition-colors duration-200 ${privateReasoningEnabled ? 'bg-emerald-500/80' : 'bg-zinc-600/60'}`}
-          >
-            <div className={`absolute top-[2px] w-[16px] h-[16px] rounded-full bg-white shadow-sm transition-transform duration-200 ${privateReasoningEnabled ? 'translate-x-[18px]' : 'translate-x-[2px]'}`} />
-          </button>
-        </div>
-
-        <p className={`text-[11px] font-medium mb-3 ${privateReasoningEnabled ? 'text-emerald-400/80' : 'text-muted-foreground/40'}`}>
-          {privateReasoningEnabled ? 'Private review enabled' : 'Private review disabled'}
-        </p>
-      </div>
-
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between px-5 py-3 border-t border-white/[0.04] hover:bg-white/[0.02] transition-colors"
-      >
-        <span className="text-[10px] text-muted-foreground/30 font-medium">Privacy details</span>
-        <ChevronDown size={12} className={`text-muted-foreground/30 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`} />
-      </button>
-
-      <div className={`overflow-hidden transition-all duration-200 ease-in-out ${expanded ? 'max-h-[300px] opacity-100' : 'max-h-0 opacity-0'}`}>
-        <div className="px-5 pb-5 space-y-3">
-          <StateRow label="Provider" value="Venice" />
-          <StateRow label="Inputs allowed" value="Text" />
-          <StateRow label="Disclosure policy" value="Summary only" />
-          {lastAnalysis && (
-            <StateRow label="Last private analysis" value={lastAnalysis} />
-          )}
-          <p className="text-[10px] text-muted-foreground/30 mt-2 leading-relaxed">
-            {privateReasoningEnabled
-              ? 'Venice reasoning may inform actions while keeping raw inputs private.'
-              : 'Actions will not use Venice private reasoning.'}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function StatCard({ value, label, color }: { value: number; label: string; color: string }) {
   return (
-    <div className="bg-card rounded-2xl p-4 border border-border/30 text-center">
-      <p className={`text-[22px] font-bold tracking-tight ${color}`}>{value}</p>
-      <p className="text-[9px] text-muted-foreground/30 mt-1 font-medium uppercase tracking-[0.15em]">{label}</p>
+    <div className="bg-card rounded-xl p-3.5 border border-border/20 text-center">
+      <p className={`text-[20px] font-bold tracking-tight ${color}`}>{value}</p>
+      <p className="text-[9px] text-muted-foreground/35 font-medium uppercase tracking-widest mt-0.5">{label}</p>
     </div>
   );
 }
 
-function StateRow({ label, value, valueColor, mono }: { label: string; value: string; valueColor?: string; mono?: boolean }) {
+function StateRow({
+  label,
+  value,
+  valueColor,
+  mono,
+}: {
+  label: string;
+  value: string;
+  valueColor?: string;
+  mono?: boolean;
+}) {
   return (
     <div className="flex items-center justify-between py-0.5">
       <span className="text-[12px] text-muted-foreground/40">{label}</span>
-      <span className={`text-[12px] font-medium ${mono ? 'font-mono text-muted-foreground/60 tracking-wide' : valueColor || 'text-foreground/90'}`}>{value}</span>
+      <span
+        className={`text-[12px] font-medium text-right max-w-[55%] truncate ${valueColor ?? 'text-foreground/90'} ${mono ? 'font-mono tracking-wide' : ''}`}
+      >
+        {value}
+      </span>
     </div>
   );
 }
