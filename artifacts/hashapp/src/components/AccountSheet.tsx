@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useAccount, useDisconnect } from 'wagmi';
-import { Copy, Check, LogOut, X, Wallet } from 'lucide-react';
+import { Copy, Check, LogOut, X, Wallet, AlertTriangle } from 'lucide-react';
 
 export function AccountSheet({ onClose }: { onClose: () => void }) {
   const { address, chain } = useAccount();
   const { disconnect } = useDisconnect();
   const [copied, setCopied] = useState(false);
+  const [confirmingDisconnect, setConfirmingDisconnect] = useState(false);
 
   if (!address) return null;
 
@@ -71,13 +72,37 @@ export function AccountSheet({ onClose }: { onClose: () => void }) {
             </span>
           </button>
 
-          <button
-            onClick={handleDisconnect}
-            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl bg-rose-500/5 border border-rose-500/10 hover:bg-rose-500/10 active:scale-[0.98] transition-all"
-          >
-            <LogOut size={16} className="text-rose-400/70" />
-            <span className="text-[14px] font-medium text-rose-400/80">Disconnect wallet</span>
-          </button>
+          {!confirmingDisconnect ? (
+            <button
+              onClick={() => setConfirmingDisconnect(true)}
+              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl bg-rose-500/5 border border-rose-500/10 hover:bg-rose-500/10 active:scale-[0.98] transition-all"
+            >
+              <LogOut size={16} className="text-rose-400/70" />
+              <span className="text-[14px] font-medium text-rose-400/80">Disconnect wallet</span>
+            </button>
+          ) : (
+            <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle size={14} className="text-rose-400/80" />
+                <span className="text-[13px] font-medium text-rose-400/90">Disconnect wallet?</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground/50 mb-3">You'll return to the landing page. Agent setup and activity will be cleared.</p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setConfirmingDisconnect(false)}
+                  className="flex-1 py-2.5 rounded-lg bg-zinc-800 border border-zinc-700/40 text-[13px] font-medium text-foreground/70 hover:bg-zinc-700 active:scale-[0.98] transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDisconnect}
+                  className="flex-1 py-2.5 rounded-lg bg-rose-500/15 border border-rose-500/20 text-[13px] font-medium text-rose-400 hover:bg-rose-500/25 active:scale-[0.98] transition-all"
+                >
+                  Disconnect
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
