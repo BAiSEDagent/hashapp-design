@@ -87,16 +87,18 @@ function ConnectAgentSheet({
   const [role, setRole] = useState(initialValues?.role ?? '');
   const [address, setAddress] = useState(initialValues?.address ?? '');
   const [errors, setErrors] = useState<{ name?: string; role?: string }>({});
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const validate = () => {
     const newErrors: typeof errors = {};
-    if (!name.trim()) newErrors.name = 'Required';
-    if (!role.trim()) newErrors.role = 'Required';
+    if (!name.trim()) newErrors.name = 'Give your agent a name so you can identify it';
+    if (!role.trim()) newErrors.role = 'Describe what this agent does';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = () => {
+    setHasSubmitted(true);
     if (!validate()) return;
     const agent: ConnectedAgent = {
       name: name.trim(),
@@ -111,67 +113,100 @@ function ConnectAgentSheet({
     onClose();
   };
 
+  const handleNameChange = (val: string) => {
+    setName(val);
+    if (hasSubmitted && val.trim()) setErrors(prev => ({ ...prev, name: undefined }));
+  };
+
+  const handleRoleChange = (val: string) => {
+    setRole(val);
+    if (hasSubmitted && val.trim()) setErrors(prev => ({ ...prev, role: undefined }));
+  };
+
+  const isEdit = !!initialValues;
+  const hasContent = name.trim() || role.trim() || address.trim();
+
+  const handleBackdropClick = () => {
+    if (hasContent && !isEdit) return;
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-[430px] bg-card border-t border-border/40 rounded-t-3xl p-6 pb-24 animate-in slide-in-from-bottom duration-300">
-        <div className="flex items-center justify-between mb-6">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleBackdropClick} />
+      <div className="relative w-full max-w-[430px] bg-card border-t border-border/40 rounded-t-3xl p-6 pb-10 animate-in slide-in-from-bottom duration-300">
+        <div className="w-10 h-1 rounded-full bg-zinc-700 mx-auto mb-5" />
+
+        <div className="flex items-center justify-between mb-2">
           <h2 className="text-[18px] font-bold tracking-tight">
-            {initialValues ? 'Edit Agent' : 'Connect Agent'}
+            {isEdit ? 'Edit Agent' : 'Connect Agent'}
           </h2>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center hover:bg-zinc-700 transition-colors">
             <X size={16} className="text-zinc-400" />
           </button>
         </div>
+        {!isEdit && (
+          <p className="text-[12px] text-muted-foreground/40 mb-5">
+            Takes about 10 seconds. You can change these anytime.
+          </p>
+        )}
 
         <div className="flex flex-col gap-4">
           <div>
-            <label className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-1.5 block">
-              Agent Name
+            <label htmlFor="agent-name" className="text-[12px] text-muted-foreground/60 font-medium mb-1.5 block">
+              Agent name
             </label>
             <input
+              id="agent-name"
               type="text"
               value={name}
-              onChange={e => setName(e.target.value)}
+              onChange={e => handleNameChange(e.target.value)}
               placeholder="e.g. Research Bot"
-              className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700/40 text-[14px] text-foreground placeholder:text-zinc-600 focus:outline-none focus:border-primary/50 transition-colors"
+              autoFocus={!isEdit}
+              enterKeyHint="next"
+              className={`w-full px-4 py-3 rounded-xl bg-zinc-800/60 border text-[14px] text-foreground placeholder:text-zinc-600 focus:outline-none transition-colors ${errors.name ? 'border-rose-500/50 focus:border-rose-500/70' : 'border-zinc-700/40 focus:border-primary/50'}`}
             />
-            {errors.name && <p className="text-[10px] text-rose-400 mt-1">{errors.name}</p>}
+            {errors.name && <p className="text-[11px] text-rose-400/80 mt-1.5">{errors.name}</p>}
           </div>
 
           <div>
-            <label className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-1.5 block">
-              Role / Description
+            <label htmlFor="agent-role" className="text-[12px] text-muted-foreground/60 font-medium mb-1.5 block">
+              What does it do?
             </label>
             <input
+              id="agent-role"
               type="text"
               value={role}
-              onChange={e => setRole(e.target.value)}
+              onChange={e => handleRoleChange(e.target.value)}
               placeholder="e.g. Research agent · reads markets"
-              className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700/40 text-[14px] text-foreground placeholder:text-zinc-600 focus:outline-none focus:border-primary/50 transition-colors"
+              enterKeyHint="next"
+              className={`w-full px-4 py-3 rounded-xl bg-zinc-800/60 border text-[14px] text-foreground placeholder:text-zinc-600 focus:outline-none transition-colors ${errors.role ? 'border-rose-500/50 focus:border-rose-500/70' : 'border-zinc-700/40 focus:border-primary/50'}`}
             />
-            {errors.role && <p className="text-[10px] text-rose-400 mt-1">{errors.role}</p>}
+            {errors.role && <p className="text-[11px] text-rose-400/80 mt-1.5">{errors.role}</p>}
           </div>
 
           <div>
-            <label className="text-[11px] text-muted-foreground/50 font-medium uppercase tracking-wider mb-1.5 block">
-              Execution Address or ENS
-              <span className="text-muted-foreground/25 normal-case tracking-normal ml-1.5">optional</span>
+            <label htmlFor="agent-address" className="text-[12px] text-muted-foreground/60 font-medium mb-1.5 block">
+              Execution address or ENS
+              <span className="text-muted-foreground/30 ml-1.5">· optional</span>
             </label>
             <input
+              id="agent-address"
               type="text"
               value={address}
               onChange={e => setAddress(e.target.value)}
               placeholder="0x... or name.eth"
+              enterKeyHint="done"
               className="w-full px-4 py-3 rounded-xl bg-zinc-800/60 border border-zinc-700/40 text-[14px] text-foreground placeholder:text-zinc-600 focus:outline-none focus:border-primary/50 transition-colors font-mono text-[13px]"
             />
+            <p className="text-[10px] text-muted-foreground/25 mt-1">The wallet address your agent uses to execute transactions.</p>
           </div>
 
           <button
             onClick={handleSubmit}
-            className="w-full py-3 rounded-xl text-[14px] font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80 mt-2"
+            className="w-full py-3.5 rounded-xl text-[14px] font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] mt-1"
           >
-            {initialValues ? 'Save Changes' : 'Connect Agent'}
+            {isEdit ? 'Save Changes' : 'Connect Agent'}
           </button>
         </div>
       </div>

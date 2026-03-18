@@ -1,5 +1,17 @@
+import { useState } from 'react';
 import { useAccount, useConnect } from 'wagmi';
-import { Wallet, Shield, Eye, ArrowRight } from 'lucide-react';
+import { Wallet, Shield, Eye, ArrowRight, Loader2 } from 'lucide-react';
+
+const CONNECTOR_LABELS: Record<string, string> = {
+  injected: 'Connect Wallet',
+  metaMask: 'Connect with MetaMask',
+  coinbaseWalletSDK: 'Connect with Coinbase Wallet',
+  walletConnect: 'Connect with WalletConnect',
+};
+
+function getConnectorLabel(connector: { id: string; name: string }): string {
+  return CONNECTOR_LABELS[connector.id] ?? `Connect with ${connector.name}`;
+}
 
 export function WalletGate({ children }: { children: React.ReactNode }) {
   const { isConnected } = useAccount();
@@ -12,7 +24,15 @@ export function WalletGate({ children }: { children: React.ReactNode }) {
 }
 
 function LandingPage() {
-  const { connectors, connect } = useConnect();
+  const { connectors, connect, isPending } = useConnect();
+  const [connectingId, setConnectingId] = useState<string | null>(null);
+
+  const handleConnect = (connector: (typeof connectors)[number]) => {
+    setConnectingId(connector.uid);
+    connect({ connector }, {
+      onSettled: () => setConnectingId(null),
+    });
+  };
 
   return (
     <div className="min-h-screen bg-[#000000] w-full flex justify-center text-foreground font-sans">
@@ -26,11 +46,11 @@ function LandingPage() {
             <h1 className="text-[32px] font-bold tracking-tight leading-tight mb-3">
               Hashapp
             </h1>
-            <p className="text-[15px] text-muted-foreground/60 leading-relaxed mb-12 max-w-[300px]">
+            <p className="text-[15px] text-muted-foreground/70 leading-relaxed mb-12 max-w-[300px]">
               A money app for your AI agents. Control what they spend, see what they do, prove what happened.
             </p>
 
-            <div className="w-full flex flex-col gap-3 mb-12">
+            <div className="w-full flex flex-col gap-3 mb-8">
               <Feature
                 icon={<Shield size={16} className="text-emerald-400" />}
                 title="Bounded authority"
@@ -49,21 +69,39 @@ function LandingPage() {
             </div>
 
             <div className="w-full flex flex-col gap-3">
-              {connectors.map((connector) => (
-                <button
-                  key={connector.uid}
-                  onClick={() => connect({ connector })}
-                  className="w-full py-3.5 rounded-2xl text-[15px] font-semibold transition-all bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] shadow-lg shadow-primary/20"
-                >
-                  Connect {connector.name}
-                </button>
-              ))}
+              {connectors.map((connector) => {
+                const isLoading = connectingId === connector.uid;
+                return (
+                  <button
+                    key={connector.uid}
+                    onClick={() => handleConnect(connector)}
+                    disabled={isPending}
+                    className="w-full py-3.5 rounded-2xl text-[15px] font-semibold transition-all bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] shadow-lg shadow-primary/20 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        Connecting...
+                      </>
+                    ) : (
+                      <>
+                        <Wallet size={16} />
+                        {getConnectorLabel(connector)}
+                      </>
+                    )}
+                  </button>
+                );
+              })}
             </div>
+
+            <p className="text-[11px] text-muted-foreground/35 mt-4 leading-relaxed max-w-[260px]">
+              Non-custodial. Your keys stay yours. Hashapp never holds your funds.
+            </p>
           </div>
         </div>
 
         <div className="pb-8 pt-4 text-center">
-          <p className="text-[10px] text-muted-foreground/20 font-medium tracking-widest uppercase">
+          <p className="text-[10px] text-muted-foreground/30 font-medium tracking-widest uppercase">
             Base Sepolia · Testnet
           </p>
         </div>
@@ -80,7 +118,7 @@ function Feature({ icon, title, desc }: { icon: React.ReactNode; title: string; 
       </div>
       <div className="flex-1 min-w-0">
         <h3 className="text-[14px] font-semibold text-foreground mb-0.5">{title}</h3>
-        <p className="text-[12px] text-muted-foreground/45 leading-relaxed">{desc}</p>
+        <p className="text-[12px] text-muted-foreground/60 leading-relaxed">{desc}</p>
       </div>
     </div>
   );
