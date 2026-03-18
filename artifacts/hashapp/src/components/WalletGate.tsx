@@ -1,17 +1,6 @@
 import { useState } from 'react';
 import { useAccount, useConnect } from 'wagmi';
-import { Wallet, Shield, Eye, ArrowRight, Loader2 } from 'lucide-react';
-
-const CONNECTOR_LABELS: Record<string, string> = {
-  injected: 'Connect Wallet',
-  metaMask: 'Connect with MetaMask',
-  coinbaseWalletSDK: 'Connect with Coinbase Wallet',
-  walletConnect: 'Connect with WalletConnect',
-};
-
-function getConnectorLabel(connector: { id: string; name: string }): string {
-  return CONNECTOR_LABELS[connector.id] ?? `Connect with ${connector.name}`;
-}
+import { Wallet, Shield, Eye, ArrowRight, Loader2, ChevronDown } from 'lucide-react';
 
 export function WalletGate({ children }: { children: React.ReactNode }) {
   const { isConnected } = useAccount();
@@ -26,6 +15,7 @@ export function WalletGate({ children }: { children: React.ReactNode }) {
 function LandingPage() {
   const { connectors, connect, isPending } = useConnect();
   const [connectingId, setConnectingId] = useState<string | null>(null);
+  const [showOtherWallets, setShowOtherWallets] = useState(false);
 
   const handleConnect = (connector: (typeof connectors)[number]) => {
     setConnectingId(connector.uid);
@@ -33,6 +23,10 @@ function LandingPage() {
       onSettled: () => setConnectingId(null),
     });
   };
+
+  const primaryConnector = connectors[0];
+  const otherConnectors = connectors.slice(1);
+  const hasPrimary = !!primaryConnector;
 
   return (
     <div className="min-h-screen bg-[#000000] w-full flex justify-center text-foreground font-sans">
@@ -69,25 +63,52 @@ function LandingPage() {
             </div>
 
             <div className="w-full flex flex-col gap-3">
-              {connectors.map((connector) => {
+              {hasPrimary && (
+                <button
+                  onClick={() => handleConnect(primaryConnector)}
+                  disabled={isPending}
+                  className="w-full py-3.5 rounded-2xl text-[15px] font-semibold transition-all bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] shadow-lg shadow-primary/20 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {connectingId === primaryConnector.uid ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <Wallet size={16} />
+                      Connect Wallet
+                    </>
+                  )}
+                </button>
+              )}
+
+              {otherConnectors.length > 0 && !showOtherWallets && (
+                <button
+                  onClick={() => setShowOtherWallets(true)}
+                  className="flex items-center justify-center gap-1.5 text-[12px] text-muted-foreground/40 hover:text-muted-foreground/60 transition-colors py-1"
+                >
+                  Other wallets
+                  <ChevronDown size={12} />
+                </button>
+              )}
+
+              {showOtherWallets && otherConnectors.map((connector) => {
                 const isLoading = connectingId === connector.uid;
                 return (
                   <button
                     key={connector.uid}
                     onClick={() => handleConnect(connector)}
                     disabled={isPending}
-                    className="w-full py-3.5 rounded-2xl text-[15px] font-semibold transition-all bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] shadow-lg shadow-primary/20 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full py-3 rounded-2xl text-[14px] font-medium transition-all bg-zinc-800/60 border border-zinc-700/30 text-foreground/80 hover:bg-zinc-800/80 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {isLoading ? (
                       <>
-                        <Loader2 size={16} className="animate-spin" />
+                        <Loader2 size={14} className="animate-spin" />
                         Connecting...
                       </>
                     ) : (
-                      <>
-                        <Wallet size={16} />
-                        {getConnectorLabel(connector)}
-                      </>
+                      connector.name
                     )}
                   </button>
                 );

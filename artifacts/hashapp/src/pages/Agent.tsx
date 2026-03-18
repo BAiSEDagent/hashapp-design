@@ -54,15 +54,15 @@ function AgentEmptyState({ onConnect }: { onConnect: () => void }) {
         <div className="w-20 h-20 rounded-full bg-zinc-800/60 border border-zinc-700/40 flex items-center justify-center mb-6">
           <Bot size={32} className="text-zinc-500" />
         </div>
-        <h1 className="text-[22px] font-bold tracking-tight mb-2">No Agent Connected</h1>
+        <h1 className="text-[22px] font-bold tracking-tight mb-2">No Agent Set Up</h1>
         <p className="text-[13px] text-muted-foreground/50 leading-relaxed mb-8">
-          Connect an agent to request payments and act within your spending rules.
+          Name your agent so it can request payments and act within your spending rules.
         </p>
         <button
           onClick={onConnect}
           className="w-full py-3 rounded-xl text-[14px] font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80"
         >
-          Connect Agent
+          Set Up Agent
         </button>
       </div>
 
@@ -139,7 +139,7 @@ function ConnectAgentSheet({
 
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-[18px] font-bold tracking-tight">
-            {isEdit ? 'Edit Agent' : 'Connect Agent'}
+            {isEdit ? 'Edit Agent' : 'Set up your agent'}
           </h2>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center hover:bg-zinc-700 transition-colors">
             <X size={16} className="text-zinc-400" />
@@ -206,7 +206,7 @@ function ConnectAgentSheet({
             onClick={handleSubmit}
             className="w-full py-3.5 rounded-xl text-[14px] font-semibold transition-colors bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] mt-1"
           >
-            {isEdit ? 'Save Changes' : 'Connect Agent'}
+            {isEdit ? 'Save Changes' : 'Set Up Agent'}
           </button>
         </div>
       </div>
@@ -344,7 +344,7 @@ function AgentActiveState({
             className="flex items-center gap-1.5 text-[11px] text-rose-400/50 hover:text-rose-400/80 transition-colors"
           >
             <Unplug size={12} />
-            Disconnect
+            Remove Agent
           </button>
         </div>
       </div>

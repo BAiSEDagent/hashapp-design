@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Wallet, Shield, ArrowRight, RefreshCw, Loader2, Zap } from 'lucide-react';
-import { useAccount, useReadContract, useDisconnect } from 'wagmi';
+import { useAccount, useReadContract } from 'wagmi';
 import { useDemo, type SpendPermission } from '@/context/DemoContext';
 import { AvatarIcon } from '@/components/ui/AvatarIcon';
 import { AgentAvatar } from '@/components/AgentAvatar';
 import { TruthBadge } from '@/components/TruthBadge';
+import { WalletAddressChip } from '@/components/WalletAddressChip';
 import { useLocation } from 'wouter';
 import { USE_METAMASK_DELEGATION } from '@/config/delegation';
 import { executeDelegationSpend } from '@/lib/delegationSpend';
@@ -29,7 +30,6 @@ export default function Money() {
   const { feed, rules, spendPermissions, resetDemo, recordDelegationSpend, connectedAgent } = useDemo();
   const agentName = connectedAgent?.name ?? 'your agent';
   const { address, isConnected, chain } = useAccount();
-  const { disconnect } = useDisconnect();
   const [, setLocation] = useLocation();
 
   const { data: usdcBalanceRaw } = useReadContract({
@@ -67,20 +67,7 @@ export default function Money() {
             <h1 className="text-[28px] font-bold tracking-tight">Money</h1>
             <p className="text-[11px] text-muted-foreground/50 mt-0.5">Your wallet · {agentName}'s allocation</p>
           </div>
-          {isConnected && truncatedAddress && (
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06]">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                <span className="text-[10px] text-muted-foreground/50 font-mono">{truncatedAddress}</span>
-              </div>
-              <button
-                onClick={() => disconnect()}
-                className="text-[9px] text-muted-foreground/30 hover:text-muted-foreground/50 transition-colors"
-              >
-                ×
-              </button>
-            </div>
-          )}
+          <WalletAddressChip />
         </div>
       </header>
 
