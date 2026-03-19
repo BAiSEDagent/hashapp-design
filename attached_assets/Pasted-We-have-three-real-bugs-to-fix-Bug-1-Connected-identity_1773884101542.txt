@@ -1,0 +1,139 @@
+We have three real bugs to fix.
+
+Bug 1 — Connected identity not reflected
+Wallet connected:
+0x7458B08E13bBC390cD2CF6a8cE8980e4954E13b8
+
+Its basename is not showing in the UI.
+
+Fix
+inspect connected wallet identity flow
+confirm basename/identity lookup is actually wired
+if lookup is not implemented, fall back cleanly to address
+do not silently imply richer identity than exists
+
+Bug 2 — Agent state not restoring per wallet
+When reconnecting the original wallet, the linked agent state does not return.
+The Agent page falls back to first-time empty state.
+
+Required behavior
+Linked agent state must be keyed to wallet identity and restored when that same wallet reconnects.
+
+Inspect:
+where connected wallet address is stored
+where linked agent state is stored
+how restore runs on app load / reconnect
+whether localStorage versioning wiped the wrong state
+
+Bug 3 — Grant Delegation button does nothing
+Tapping Grant Delegation shows no MetaMask popup and no useful error.
+
+Required behavior
+either wallet popup appears
+or user gets a clear inline error
+
+Inspect:
+click handler wiring
+provider/wallet availability in that screen
+gating conditions
+swallowed exceptions
+disabled logic that still renders as active button
+
+Deliverable
+Return exactly:
+root cause for each of the three bugs
+files changed
+commit hash
+branch
+pushed or not
+screenshots / proof for:
+wallet identity restored
+linked agent restored after reconnect
+Grant Delegation producing popup or explicit error
+
+Do not do polish work first.
+Fix these real state/wiring bugs first.
+
+---
+
+That’s the right next move.
+Exactly.
+This is the kind of shit that kills trust.
+
+Not the big architecture.
+The tiny state and interaction failures:
+wallet not restoring cleanly
+basename not surfacing
+agent state disappearing
+button looks live but does nothing
+
+That’s what makes the app feel fake even when the underlying proofs are real.
+
+What needs to happen
+We need a stability sweep, not another feature pass.
+
+Scope
+No new features.
+No new tabs.
+No new integrations.
+Just:
+connection
+restore
+identity
+grant button
+account sheet
+persistence
+provider wiring
+
+Standard
+These paths need to be:
+boring
+predictable
+impossible to misunderstand
+If the user:
+connects wallet
+reconnects same wallet
+taps address
+taps grant
+
+the app should behave exactly how they expect every single time.
+
+What I’d tell Replit
+Paste this:
+
+---
+
+Stop feature work for one pass.
+
+We need a stability / trust sweep on the core UX.
+The little things are breaking, and those are the things that make the product feel fake.
+Priority paths that must become rock solid
+wallet connection / reconnect
+identity display (address / basename)
+linked agent restore per wallet
+account sheet / disconnect
+grant delegation button behavior
+clear error surfacing when wallet/provider action fails
+
+Rule
+No new features until these paths are stable.
+
+Goal
+Make the core interactions boring and reliable:
+connect
+reconnect
+restore
+tap address
+grant delegation
+
+Deliverable
+Return:
+list of fragile paths audited
+root cause for each break
+fixes made
+commit hash
+branch
+pushed or not
+test checklist proving these flows are now stable
+
+Treat this like a product trust pass, not polish.
