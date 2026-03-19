@@ -11,8 +11,8 @@ export function MobileLayout({ children }: { children: React.ReactNode }) {
         </main>
 
         <nav className="absolute bottom-0 w-full h-[72px] bg-background/85 backdrop-blur-xl border-t border-white/[0.06] flex items-center justify-around px-4 z-50">
-          <NavItem href="/money" icon={<DollarSign size={20} />} label="Money" />
-          <NavItem href="/" icon={<Activity size={20} />} label="Activity" />
+          <NavItem href="/" icon={<DollarSign size={20} />} label="Money" />
+          <NavItem href="/activity" icon={<Activity size={20} />} label="Activity" />
           <NavItem href="/defi" icon={<ArrowLeftRight size={20} />} label="DeFi" />
           <NavItem href="/agent" icon={<Bot size={20} />} label="Agent" />
           <NavItem href="/rules" icon={<ShieldCheck size={20} />} label="Rules" />

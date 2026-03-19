@@ -110,7 +110,7 @@ export default function Receipt() {
     <div className="fixed inset-0 z-[100] flex justify-center bg-background">
       <div className="w-full max-w-[430px] bg-background h-full flex flex-col relative">
         <div className="flex items-center justify-between p-6">
-          <Link href="/" className="p-2 -ml-2 rounded-full hover:bg-white/[0.04] active:bg-white/[0.06] transition-colors">
+          <Link href="/activity" className="p-2 -ml-2 rounded-full hover:bg-white/[0.04] active:bg-white/[0.06] transition-colors">
             <X size={20} className="text-foreground/80" />
           </Link>
         </div>
@@ -145,7 +145,7 @@ export default function Receipt() {
     >
       <div className="w-full max-w-[430px] bg-background h-full flex flex-col relative">
         <div className="flex items-center justify-between p-6">
-          <Link href="/" className="p-2 -ml-2 rounded-full hover:bg-white/[0.04] active:bg-white/[0.06] transition-colors">
+          <Link href="/activity" className="p-2 -ml-2 rounded-full hover:bg-white/[0.04] active:bg-white/[0.06] transition-colors">
             <X size={20} className="text-foreground/80" />
           </Link>
         </div>

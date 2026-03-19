@@ -23,8 +23,8 @@ function Router() {
     <WalletGate>
       <MobileLayout>
         <Switch>
-          <Route path="/" component={Activity} />
-          <Route path="/money" component={Money} />
+          <Route path="/" component={Money} />
+          <Route path="/activity" component={Activity} />
           <Route path="/receipt/:id" component={Receipt} />
           <Route path="/rules" component={Rules} />
           <Route path="/agent" component={Agent} />
